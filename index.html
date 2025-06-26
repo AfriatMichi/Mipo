@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ספירת תלמידים - טיול</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-left: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .status.counting {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+        }
+
+        .status.stopped {
+            background: #fff3e0;
+            color: #f57c00;
+            border: 2px solid #f57c00;
+        }
+
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .student-card {
+            background: white;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+            opacity: 0;
+        }
+
+        .student-card:hover::before {
+            opacity: 1;
+            animation: shine 0.5s ease-in-out;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .student-card.present {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+            border-color: #40c057;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .student-card.present::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .student-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .student-status {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .counter {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .counter h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .counter .numbers {
+            font-size: 3em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .teacher-controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .students-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 ספירת תלמידים</h1>
+            <p>מערכת נוכחות לטיול</p>
+        </div>
+
+        <div class="content">
+            <!-- הגדרת רשימת תלמידים -->
+            <div class="section" id="setup-section">
+                <h2>📝 הגדרת רשימת תלמידים</h2>
+                <div class="input-group">
+                    <label for="teacher-name">שם המורה:</label>
+                    <input type="text" id="teacher-name" placeholder="הכנס את שמך">
+                </div>
+                <div class="input-group">
+                    <label for="class-name">שם הכיתה/קבוצה:</label>
+                    <input type="text" id="class-name" placeholder="למשל: כיתה ח'1">
+                </div>
+                <div class="input-group">
+                    <label for="students-list">רשימת תלמידים (שם אחד בכל שורה):</label>
+                    <textarea id="students-list" placeholder="הכנס שמות תלמידים, שם אחד בכל שורה&#10;למשל:&#10;יוסי כהן&#10;שרה לוי&#10;דוד דוידוב"></textarea>
+                </div>
+                <button class="btn" onclick="setupStudents()">📋 הכן רשימה</button>
+            </div>
+
+            <!-- בקרות מורה -->
+            <div class="section teacher-controls hidden" id="teacher-controls">
+                <h2>🎯 בקרות מורה</h2>
+                <button class="btn btn-success" onclick="startCounting()">🚀 התחל ספירה</button>
+                <button class="btn btn-danger" onclick="stopCounting()">⏹️ עצור ספירה</button>
+                <button class="btn" onclick="resetAttendance()">🔄 איפוס נוכחות</button>
+                <button class="btn" onclick="newSession()">🆕 התחל מחדש</button>
+            </div>
+
+            <!-- מצב הספירה -->
+            <div class="status hidden" id="status">
+                <div id="status-text">🎯 מוכן לספירה</div>
+            </div>
+
+            <!-- מונה תלמידים -->
+            <div class="counter hidden" id="counter">
+                <h3>📊 סטטוס נוכחות</h3>
+                <div class="numbers">
+                    <span id="present-count">0</span> / <span id="total-count">0</span>
+                </div>
+                <div>תלמידים נוכחים</div>
+            </div>
+
+            <!-- רשימת תלמידים -->
+            <div class="section hidden" id="students-section">
+                <h2>👥 רשימת תלמידים</h2>
+                <div class="students-grid" id="students-grid">
+                    <!-- תלמידים יוצגו כאן -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+        let isCountingActive = false;
+        let teacherName = '';
+        let className = '';
+
+        function setupStudents() {
+            teacherName = document.getElementById('teacher-name').value.trim();
+            className = document.getElementById('class-name').value.trim();
+            const studentsText = document.getElementById('students-list').value.trim();
+            
+            if (!teacherName || !className || !studentsText) {
+                alert('אנא מלא את כל השדות');
+                return;
+            }
+
+            const studentNames = studentsText.split('\n').map(name => name.trim()).filter(name => name);
+            
+            if (studentNames.length === 0) {
+                alert('אנא הכנס לפחות תלמיד אחד');
+                return;
+            }
+
+            students = studentNames.map(name => ({
+                name: name,
+                present: false,
+                id: Math.random().toString(36).substr(2, 9)
+            }));
+
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('teacher-controls').classList.remove('hidden');
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('counter').classList.remove('hidden');
+            document.getElementById('students-section').classList.remove('hidden');
+
+            updateCounter();
+            displayStudents();
+            updateStatus();
+        }
+
+        function displayStudents() {
+            const grid = document.getElementById('students-grid');
+            grid.innerHTML = '';
+
+            students.forEach(student => {
+                const card = document.createElement('div');
+                card.className = `student-card ${student.present ? 'present' : ''}`;
+                card.onclick = () => toggleStudent(student.id);
+                
+                card.innerHTML = `
+                    <div class="student-name">${student.name}</div>
+                    <div class="student-status">${student.present ? 'נוכח ✓' : 'לא נוכח'}</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleStudent(studentId) {
+            if (!isCountingActive) {
+                alert('הספירה לא פעילה כרגע. אנא בקש מהמורה להפעיל את הספירה.');
+                return;
+            }
+
+            const student = students.find(s => s.id === studentId);
+            if (student) {
+                student.present = !student.present;
+                displayStudents();
+                updateCounter();
+                
+                // אפקט ויזואלי
+                const card = document.querySelector(`[onclick="toggleStudent('${studentId}')"]`);
+                if (card) {
+                    card.classList.add('pulse');
+                    setTimeout(() => card.classList.remove('pulse'), 1000);
+                }
+            }
+        }
+
+        function updateCounter() {
+            const presentCount = students.filter(s => s.present).length;
+            const totalCount = students.length;
+            
+            document.getElementById('present-count').textContent = presentCount;
+            document.getElementById('total-count').textContent = totalCount;
+        }
+
+        function startCounting() {
+            isCountingActive = true;
+            updateStatus();
+            alert('הספירה החלה! התלמידים יכולים כעת לסמן את עצמם.');
+        }
+
+        function stopCounting() {
+            isCountingActive = false;
+            updateStatus();
+            
+            const presentCount = students.filter(s => s.present).length;
+            const totalCount = students.length;
+            
+            alert(`הספירה הסתיימה!\nנוכחים: ${presentCount} מתוך ${totalCount} תלמידים`);
+        }
+
+        function resetAttendance() {
+            if (confirm('האם אתה בטוח שברצונך לאפס את הנוכחות של כל התלמידים?')) {
+                students.forEach(student => student.present = false);
+                displayStudents();
+                updateCounter();
+                alert('הנוכחות אופסה בהצלחה');
+            }
+        }
+
+        function newSession() {
+            if (confirm('האם אתה בטוח שברצונך להתחיל מחדש? כל הנתונים יאבדו.')) {
+                students = [];
+                isCountingActive = false;
+                teacherName = '';
+                className = '';
+                
+                document.getElementById('teacher-name').value = '';
+                document.getElementById('class-name').value = '';
+                document.getElementById('students-list').value = '';
+                
+                document.getElementById('setup-section').classList.remove('hidden');
+                document.getElementById('teacher-controls').classList.add('hidden');
+                document.getElementById('status').classList.add('hidden');
+                document.getElementById('counter').classList.add('hidden');
+                document.getElementById('students-section').classList.add('hidden');
+            }
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('status');
+            const statusText = document.getElementById('status-text');
+            
+            if (isCountingActive) {
+                statusElement.className = 'status counting pulse';
+                statusText.textContent = '🔄 הספירה פעילה - תלמידים יכולים לסמן את עצמם';
+            } else {
+                statusElement.className = 'status stopped';
+                statusText.textContent = '⏸️ הספירה מושהית - ממתין להפעלה';
+            }
+        }
+
+        // עדכון אוטומטי של הזמן
+        setInterval(() => {
+            if (isCountingActive) {
+                updateCounter();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
