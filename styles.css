@@ -418,4 +418,16 @@ body {
 .btn-warning:hover {
     background: linear-gradient(135deg, #e0a800 0%, #d39e00 100%);
     transform: translateY(-2px);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border: none;
+    margin: 5px;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+    transform: translateY(-2px);
 } 

@@ -118,12 +118,16 @@
             <!-- ניהול סשנים -->
             <div class="section hidden" id="sessions-section">
                 <h2>💾 סשנים שמורים</h2>
+                <div class="warning-banner" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 5px; color: #856404;">
+                    ⚠️ <strong>הערה:</strong> כללי האבטחה פתוחים זמנית לצורך בדיקה. יש לחזור לכללים מאובטחים בהקדם.
+                </div>
                 <div id="sessions-list">
                     <!-- סשנים שמורים יוצגו כאן -->
                 </div>
                 <button class="btn" onclick="loadSessions()">🔄 רענן רשימה</button>
                 <button class="btn btn-secondary" onclick="loadMostRecentSession(false)">📂 טען סשן אחרון</button>
                 <button class="btn btn-warning" onclick="refreshAuth()">🔐 רענן הרשאות</button>
+                <button class="btn btn-info" onclick="debugAuth()">🐛 בדוק אימות</button>
             </div>
 
             <!-- בקרות מורה -->

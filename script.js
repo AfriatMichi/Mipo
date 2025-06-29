@@ -111,6 +111,8 @@ async function loadSessions() {
         return;
     }
     
+    console.log('Loading sessions for user:', currentUser.uid, currentUser.email);
+    
     try {
         const sessionsList = document.getElementById('sessions-list');
         sessionsList.innerHTML = '<p>טוען סשנים...</p>';
@@ -121,11 +123,14 @@ async function loadSessions() {
         let userSessions = [];
         querySnapshot.forEach((doc) => {
             const session = doc.data();
+            console.log('Found session:', doc.id, session.userId, session.teacherName);
             // Only show sessions belonging to current user
             if (session.userId === currentUser.uid) {
                 userSessions.push({ id: doc.id, data: session });
             }
         });
+
+        console.log('User sessions found:', userSessions.length);
 
         if (userSessions.length === 0) {
             sessionsList.innerHTML = '<p>אין סשנים שמורים</p>';
@@ -168,6 +173,13 @@ async function loadSessions() {
         });
     } catch (error) {
         console.error('Error loading sessions:', error);
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            user: currentUser?.uid,
+            email: currentUser?.email
+        });
+        
         let errorMessage = 'שגיאה בטעינת סשנים';
         
         if (error.code === 'permission-denied') {
@@ -713,13 +725,39 @@ async function refreshAuth() {
 // Function to check if user has proper permissions
 async function checkPermissions() {
     try {
+        console.log('Checking permissions for user:', currentUser?.uid, currentUser?.email);
+        console.log('Auth state:', auth.currentUser);
+        
         // Try to read from sessions collection to test permissions
         const testQuery = await getDocs(collection(db, 'sessions'));
         console.log('Permissions check passed');
     } catch (error) {
         console.error('Permissions check failed:', error);
+        console.error('Auth details:', {
+            currentUser: currentUser?.uid,
+            authUser: auth.currentUser?.uid,
+            isAuthenticated: !!auth.currentUser
+        });
+        
         if (error.code === 'permission-denied') {
             showNotification('בעיית הרשאות זוהתה. לחץ על "רענן הרשאות"', 'warning');
         }
+    }
+}
+
+// Function to debug authentication state
+function debugAuth() {
+    console.log('=== AUTH DEBUG INFO ===');
+    console.log('currentUser:', currentUser);
+    console.log('auth.currentUser:', auth.currentUser);
+    console.log('auth.currentUser?.uid:', auth.currentUser?.uid);
+    console.log('auth.currentUser?.email:', auth.currentUser?.email);
+    console.log('auth.currentUser?.emailVerified:', auth.currentUser?.emailVerified);
+    console.log('auth.currentUser?.providerData:', auth.currentUser?.providerData);
+    
+    if (currentUser) {
+        showNotification(`מחובר: ${currentUser.email} (${currentUser.uid})`, 'info');
+    } else {
+        showNotification('לא מחובר', 'error');
     }
 }
