@@ -12,7 +12,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -47,6 +47,10 @@
         window.signInWithPopup = signInWithPopup;
         window.signOut = signOut;
         window.onAuthStateChanged = onAuthStateChanged;
+        
+        // Import and make query functions available
+        window.query = query;
+        window.where = where;
     </script>
 </head>
 <body>
@@ -118,9 +122,6 @@
             <!-- ניהול סשנים -->
             <div class="section hidden" id="sessions-section">
                 <h2>💾 סשנים שמורים</h2>
-                <div class="warning-banner" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 5px; color: #856404;">
-                    ⚠️ <strong>הערה:</strong> כללי האבטחה פתוחים זמנית לצורך בדיקה. יש לחזור לכללים מאובטחים בהקדם.
-                </div>
                 <div id="sessions-list">
                     <!-- סשנים שמורים יוצגו כאן -->
                 </div>

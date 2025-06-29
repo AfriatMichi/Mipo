@@ -1,9 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TEMPORARY: Allow all access for debugging
+    // Allow authenticated users to read and write their own sessions
+    match /sessions/{document} {
+      allow read, write: if request.auth != null;
+      allow list: if request.auth != null;
+    }
+    
+    // Deny access to all other collections
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 } 

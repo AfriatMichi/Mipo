@@ -67,7 +67,8 @@ async function checkPermissions() {
         console.log('Auth state:', auth.currentUser);
         
         // Try to read from sessions collection to test permissions
-        const testQuery = await getDocs(collection(db, 'sessions'));
+        const sessionsQuery = query(collection(db, 'sessions'), where('userId', '==', currentUser.uid));
+        const testQuery = await getDocs(sessionsQuery);
         console.log('Permissions check passed');
     } catch (error) {
         console.error('Permissions check failed:', error);
@@ -195,17 +196,17 @@ async function loadSessions() {
         const sessionsList = document.getElementById('sessions-list');
         sessionsList.innerHTML = '<p>טוען סשנים...</p>';
 
-        const querySnapshot = await getDocs(collection(db, 'sessions'));
+        // Query sessions for current user only
+        const sessionsQuery = query(collection(db, 'sessions'), where('userId', '==', currentUser.uid));
+        const querySnapshot = await getDocs(sessionsQuery);
+        
         sessionsList.innerHTML = '';
 
         let userSessions = [];
         querySnapshot.forEach((doc) => {
             const session = doc.data();
             console.log('Found session:', doc.id, session.userId, session.teacherName);
-            // Only show sessions belonging to current user
-            if (session.userId === currentUser.uid) {
-                userSessions.push({ id: doc.id, data: session });
-            }
+            userSessions.push({ id: doc.id, data: session });
         });
 
         console.log('User sessions found:', userSessions.length);
@@ -734,15 +735,14 @@ async function loadMostRecentSession(silent = false) {
     }
     
     try {
-        const querySnapshot = await getDocs(collection(db, 'sessions'));
-        let userSessions = [];
+        // Query sessions for current user only
+        const sessionsQuery = query(collection(db, 'sessions'), where('userId', '==', currentUser.uid));
+        const querySnapshot = await getDocs(sessionsQuery);
         
+        let userSessions = [];
         querySnapshot.forEach((doc) => {
             const session = doc.data();
-            // Only get sessions belonging to current user
-            if (session.userId === currentUser.uid) {
-                userSessions.push({ id: doc.id, data: session });
-            }
+            userSessions.push({ id: doc.id, data: session });
         });
 
         if (userSessions.length === 0) {
