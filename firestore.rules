@@ -1,10 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to sessions collection for authenticated users
+    // Allow authenticated users to read and write their own sessions
     match /sessions/{document} {
       allow read, write: if request.auth != null && 
         (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.keys().hasAll(['teacherName', 'className', 'students', 'userId', 'userEmail', 'createdAt', 'lastUpdated']) &&
+        request.resource.data.students.size() > 0 &&
+        request.resource.data.teacherName is string &&
+        request.resource.data.teacherName.size() > 0 &&
+        request.resource.data.className is string &&
+        request.resource.data.className.size() > 0 &&
+        request.resource.data.userEmail == request.auth.token.email &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.lastUpdated is timestamp &&
+        request.resource.data.students is list &&
+        request.resource.data.isCountingActive is bool &&
+        request.resource.data.userId is string &&
+        request.resource.data.userId.size() > 0;
+      allow update: if request.auth != null && 
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.teacherName == resource.data.teacherName &&
+        request.resource.data.className == resource.data.className &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.students.size() > 0 &&
+        request.resource.data.userEmail == request.auth.token.email &&
+        request.resource.data.lastUpdated is timestamp &&
+        request.resource.data.students is list &&
+        request.resource.data.isCountingActive is bool &&
+        request.resource.data.userId is string &&
+        request.resource.data.userId.size() > 0;
+      allow delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
     }
     
     // Deny access to all other collections

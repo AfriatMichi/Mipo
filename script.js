@@ -480,6 +480,11 @@ async function login() {
         showMainApp();
         updateUserUI();
         loadSessions();
+        
+        // Try to load the most recent session
+        setTimeout(() => {
+            loadMostRecentSession(true); // Silent mode for automatic loading
+        }, 1000); // Small delay to ensure sessions are loaded first
     } catch (error) {
         console.error('Login error:', error);
         alert('שגיאה בהתחברות: ' + error.message);
@@ -493,6 +498,11 @@ async function loginWithGoogle() {
         showMainApp();
         updateUserUI();
         loadSessions();
+        
+        // Try to load the most recent session
+        setTimeout(() => {
+            loadMostRecentSession(true); // Silent mode for automatic loading
+        }, 1000); // Small delay to ensure sessions are loaded first
     } catch (error) {
         console.error('Google login error:', error);
         alert('שגיאה בהתחברות עם Google: ' + error.message);
@@ -525,6 +535,8 @@ async function register() {
         showMainApp();
         updateUserUI();
         loadSessions();
+        
+        // For new users, there won't be any sessions to load, so we don't call loadMostRecentSession
     } catch (error) {
         console.error('Registration error:', error);
         alert('שגיאה בהרשמה: ' + error.message);
@@ -579,7 +591,61 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         showMainApp();
         loadSessions();
+        
+        // Try to load the most recent session
+        setTimeout(() => {
+            loadMostRecentSession(true); // Silent mode for automatic loading
+        }, 1000); // Small delay to ensure sessions are loaded first
     } else {
         showLoginForm();
     }
 });
+
+async function loadMostRecentSession(silent = false) {
+    if (!currentUser) {
+        if (!silent) {
+            showNotification('יש להתחבר כדי לטעון סשן', 'error');
+        }
+        return;
+    }
+    
+    try {
+        const querySnapshot = await getDocs(collection(db, 'sessions'));
+        let userSessions = [];
+        
+        querySnapshot.forEach((doc) => {
+            const session = doc.data();
+            // Only get sessions belonging to current user
+            if (session.userId === currentUser.uid) {
+                userSessions.push({ id: doc.id, data: session });
+            }
+        });
+
+        if (userSessions.length === 0) {
+            if (!silent) {
+                showNotification('אין סשנים שמורים לטעינה', 'info');
+            }
+            return; // No sessions to load
+        }
+
+        // Sort by creation date (most recent first)
+        userSessions.sort((a, b) => {
+            const dateA = a.data.createdAt.toDate();
+            const dateB = b.data.createdAt.toDate();
+            return dateB - dateA;
+        });
+
+        // Load the most recent session
+        const mostRecentSession = userSessions[0];
+        await loadSession(mostRecentSession.id);
+        
+        if (!silent) {
+            showNotification('הסשן האחרון נטען בהצלחה', 'success');
+        }
+    } catch (error) {
+        console.error('Error loading most recent session:', error);
+        if (!silent) {
+            showNotification('שגיאה בטעינת הסשן האחרון', 'error');
+        }
+    }
+}
