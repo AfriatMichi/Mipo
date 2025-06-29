@@ -2,7 +2,7 @@ let students = [];
 let isCountingActive = false;
 let teacherName = '';
 let className = '';
-let currentSessionId = null;
+let currentTripId = null;
 let currentUser = null;
 
 // Function to debug authentication state
@@ -114,13 +114,13 @@ function showNotification(message, type = 'success') {
 }
 
 // Firebase functions
-async function autoSaveSession() {
+async function autoSaveTrip() {
     if (!currentUser || !teacherName || !className || students.length === 0) {
         return; // Don't save if not ready
     }
 
     try {
-        const sessionData = {
+        const tripData = {
             teacherName: teacherName,
             className: className,
             students: students,
@@ -130,26 +130,26 @@ async function autoSaveSession() {
             userEmail: currentUser.email
         };
 
-        if (currentSessionId) {
-            // Update existing session
-            const sessionRef = doc(db, 'sessions', currentSessionId);
-            await updateDoc(sessionRef, {
-                ...sessionData,
+        if (currentTripId) {
+            // Update existing trip
+            const tripRef = doc(db, 'sessions', currentTripId);
+            await updateDoc(tripRef, {
+                ...tripData,
                 lastUpdated: new Date()
             });
         } else {
-            // Create new session
+            // Create new trip
             const docRef = await addDoc(collection(db, 'sessions'), {
-                ...sessionData,
+                ...tripData,
                 createdAt: new Date()
             });
-            currentSessionId = docRef.id;
+            currentTripId = docRef.id;
         }
         
-        // Update sessions list
-        loadSessions();
+        // Update trips list
+        loadTrips();
     } catch (error) {
-        console.error('Error auto-saving session:', error);
+        console.error('Error auto-saving trip:', error);
         let errorMessage = 'שגיאה בשמירה אוטומטית';
         
         if (error.code === 'permission-denied') {
@@ -164,9 +164,9 @@ async function autoSaveSession() {
     }
 }
 
-async function saveSession() {
+async function saveTrip() {
     if (!currentUser) {
-        showNotification('יש להתחבר כדי לשמור סשן', 'error');
+        showNotification('יש להתחבר כדי לשמור טיול', 'error');
         return;
     }
     
@@ -176,11 +176,11 @@ async function saveSession() {
     }
 
     try {
-        await autoSaveSession();
-        showNotification('הסשן נשמר בהצלחה', 'success');
+        await autoSaveTrip();
+        showNotification('הטיול נשמר בהצלחה', 'success');
     } catch (error) {
-        console.error('Error saving session:', error);
-        showNotification('שגיאה בשמירת הסשן: ' + error.message, 'error');
+        console.error('Error saving trip:', error);
+        showNotification('שגיאה בשמירת הטיול: ' + error.message, 'error');
     }
 }
 
@@ -302,7 +302,7 @@ async function loadSession(sessionId) {
             className = sessionData.className;
             students = sessionData.students;
             isCountingActive = sessionData.isCountingActive;
-            currentSessionId = sessionId;
+            currentTripId = sessionId;
 
             // Update UI
             document.getElementById('teacher-name').value = teacherName;
@@ -380,7 +380,7 @@ function setupStudents() {
         id: Math.random().toString(36).substr(2, 9)
     }));
 
-    currentSessionId = null; // Reset session ID for new session
+    currentTripId = null; // Reset session ID for new session
 
     document.getElementById('setup-section').classList.add('hidden');
     document.getElementById('teacher-controls').classList.remove('hidden');
@@ -393,7 +393,7 @@ function setupStudents() {
     updateStatus();
     
     // Auto-save the new session
-    autoSaveSession();
+    autoSaveTrip();
 }
 
 function displayStudents() {
@@ -427,7 +427,7 @@ function toggleStudent(studentId) {
         updateCounter();
         
         // Auto-save when attendance changes
-        autoSaveSession();
+        autoSaveTrip();
         
         // אפקט ויזואלי
         const card = document.querySelector(`[onclick="toggleStudent('${studentId}')"]`);
@@ -451,7 +451,7 @@ function startCounting() {
     updateStatus();
     
     // Auto-save when counting starts
-    autoSaveSession();
+    autoSaveTrip();
 }
 
 function stopCounting() {
@@ -466,7 +466,7 @@ function stopCounting() {
     statusText.textContent = `⏹️ הספירה הסתיימה - נוכחים: ${presentCount} מתוך ${totalCount} תלמידים`;
     
     // Auto-save when counting stops
-    autoSaveSession();
+    autoSaveTrip();
 }
 
 function resetAttendance() {
@@ -476,7 +476,7 @@ function resetAttendance() {
         updateCounter();
         
         // Auto-save when attendance is reset
-        autoSaveSession();
+        autoSaveTrip();
     }
 }
 
@@ -486,7 +486,7 @@ function newSession() {
         isCountingActive = false;
         teacherName = '';
         className = '';
-        currentSessionId = null;
+        currentTripId = null;
         
         document.getElementById('teacher-name').value = '';
         document.getElementById('class-name').value = '';
@@ -514,7 +514,7 @@ function updateStatus() {
     }
     
     // Show auto-save indicator only if there's an active session
-    if (currentSessionId && teacherName && className && students.length > 0) {
+    if (currentTripId && teacherName && className && students.length > 0) {
         autoSaveIndicator.style.display = 'block';
     } else {
         autoSaveIndicator.style.display = 'none';
@@ -533,12 +533,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (user) {
                     showMainApp();
-                    loadSessions();
+                    loadTrips();
                     
-                    // Try to load the most recent session
+                    // Try to load the most recent trip
                     setTimeout(() => {
-                        loadMostRecentSession(true); // Silent mode for automatic loading
-                    }, 1000); // Small delay to ensure sessions are loaded first
+                        loadMostRecentTrip(true); // Silent mode for automatic loading
+                    }, 1000); // Small delay to ensure trips are loaded first
                     
                     // Check permissions after a short delay
                     setTimeout(() => {
@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Save data when user leaves the page
 window.addEventListener('beforeunload', function() {
     if (currentUser && teacherName && className && students.length > 0) {
-        autoSaveSession();
+        autoSaveTrip();
     }
 });
 
@@ -573,8 +573,8 @@ setInterval(() => {
 
 // Auto-save every 30 seconds if there's an active session
 setInterval(() => {
-    if (currentUser && currentSessionId && teacherName && className && students.length > 0) {
-        autoSaveSession();
+    if (currentUser && currentTripId && teacherName && className && students.length > 0) {
+        autoSaveTrip();
     }
 }, 30000);
 
@@ -622,12 +622,12 @@ async function login() {
         currentUser = userCredential.user;
         showMainApp();
         updateUserUI();
-        loadSessions();
+        loadTrips();
         
-        // Try to load the most recent session
+        // Try to load the most recent trip
         setTimeout(() => {
-            loadMostRecentSession(true); // Silent mode for automatic loading
-        }, 1000); // Small delay to ensure sessions are loaded first
+            loadMostRecentTrip(true); // Silent mode for automatic loading
+        }, 1000); // Small delay to ensure trips are loaded first
     } catch (error) {
         console.error('Login error:', error);
         alert('שגיאה בהתחברות: ' + error.message);
@@ -640,12 +640,12 @@ async function loginWithGoogle() {
         currentUser = result.user;
         showMainApp();
         updateUserUI();
-        loadSessions();
+        loadTrips();
         
-        // Try to load the most recent session
+        // Try to load the most recent trip
         setTimeout(() => {
-            loadMostRecentSession(true); // Silent mode for automatic loading
-        }, 1000); // Small delay to ensure sessions are loaded first
+            loadMostRecentTrip(true); // Silent mode for automatic loading
+        }, 1000); // Small delay to ensure trips are loaded first
     } catch (error) {
         console.error('Google login error:', error);
         alert('שגיאה בהתחברות עם Google: ' + error.message);
@@ -694,16 +694,35 @@ async function logout() {
         updateUserUI();
         // Reset all data
         students = [];
-        isCountingActive = false;
         teacherName = '';
         className = '';
-        currentSessionId = null;
+        currentTripId = null;
         
         // Hide sessions section
         document.getElementById('sessions-section').classList.add('hidden');
+        
+        // Show setup section
+        document.getElementById('setup-section').classList.remove('hidden');
+        document.getElementById('teacher-controls').classList.add('hidden');
+        document.getElementById('status').classList.add('hidden');
+        document.getElementById('counter').classList.add('hidden');
+        document.getElementById('students-section').classList.add('hidden');
+        
+        // Clear form fields
+        document.getElementById('teacher-name').value = '';
+        document.getElementById('class-name').value = '';
+        document.getElementById('students-list').value = '';
+        
+        // Clear students display
+        document.getElementById('students-container').innerHTML = '';
+        
+        // Reset counter
+        document.getElementById('counter').textContent = '0';
+        
+        showNotification('התנתקת בהצלחה', 'success');
     } catch (error) {
         console.error('Logout error:', error);
-        alert('שגיאה בהתנתקות: ' + error.message);
+        showNotification('שגיאה בהתנתקות: ' + error.message, 'error');
     }
 }
 
@@ -776,6 +795,237 @@ async function loadMostRecentSession(silent = false) {
             errorMessage = 'שירות Firestore לא זמין כרגע. אנא נסה שוב מאוחר יותר.';
         } else if (error.code === 'unauthenticated') {
             errorMessage = 'יש להתחבר מחדש כדי לטעון סשנים.';
+        }
+        
+        if (!silent) {
+            showNotification(errorMessage, 'error');
+        }
+    }
+}
+
+async function loadTrips() {
+    if (!currentUser) {
+        document.getElementById('sessions-list').innerHTML = '<p>יש להתחבר כדי לראות טיולים</p>';
+        return;
+    }
+    
+    console.log('Loading trips for user:', currentUser.uid, currentUser.email);
+    
+    try {
+        const sessionsList = document.getElementById('sessions-list');
+        sessionsList.innerHTML = '<p>טוען טיולים...</p>';
+
+        // Query trips for current user only
+        const tripsQuery = query(collection(db, 'sessions'), where('userId', '==', currentUser.uid));
+        const querySnapshot = await getDocs(tripsQuery);
+        
+        sessionsList.innerHTML = '';
+
+        let userTrips = [];
+        querySnapshot.forEach((doc) => {
+            const trip = doc.data();
+            console.log('Found trip:', doc.id, trip.userId, trip.teacherName);
+            userTrips.push({ id: doc.id, data: trip });
+        });
+
+        console.log('User trips found:', userTrips.length);
+
+        if (userTrips.length === 0) {
+            sessionsList.innerHTML = '<p>אין טיולים שמורים</p>';
+            return;
+        }
+
+        userTrips.forEach(({ id, data: trip }) => {
+            const tripDiv = document.createElement('div');
+            tripDiv.className = 'session-item';
+            tripDiv.style.cssText = `
+                background: white;
+                border: 2px solid #ddd;
+                border-radius: 10px;
+                padding: 15px;
+                margin: 10px 0;
+                cursor: pointer;
+                transition: all 0.3s;
+            `;
+            
+            tripDiv.innerHTML = `
+                <h3>${trip.teacherName} - ${trip.className}</h3>
+                <p>תלמידים: ${trip.students.length}</p>
+                <p>נוכחים: ${trip.students.filter(s => s.present).length}</p>
+                <p>נוצר: ${trip.createdAt.toDate().toLocaleString('he-IL')}</p>
+                <button class="btn" onclick="loadTrip('${id}')" style="margin: 5px;">📂 טען</button>
+                <button class="btn btn-danger" onclick="deleteTrip('${id}')" style="margin: 5px;">🗑️ מחק</button>
+            `;
+            
+            tripDiv.onmouseover = () => {
+                tripDiv.style.transform = 'translateY(-2px)';
+                tripDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+            };
+            
+            tripDiv.onmouseout = () => {
+                tripDiv.style.transform = 'translateY(0)';
+                tripDiv.style.boxShadow = 'none';
+            };
+            
+            sessionsList.appendChild(tripDiv);
+        });
+    } catch (error) {
+        console.error('Error loading trips:', error);
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            user: currentUser?.uid,
+            email: currentUser?.email
+        });
+        
+        let errorMessage = 'שגיאה בטעינת טיולים';
+        
+        if (error.code === 'permission-denied') {
+            errorMessage = 'אין הרשאה לטעון טיולים. אנא ודא שאתה מחובר.';
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'שירות Firestore לא זמין כרגע. אנא נסה שוב מאוחר יותר.';
+        } else if (error.code === 'unauthenticated') {
+            errorMessage = 'יש להתחבר מחדש כדי לטעון טיולים.';
+        }
+        
+        document.getElementById('sessions-list').innerHTML = `<p style="color: red;">${errorMessage}</p>`;
+        showNotification(errorMessage, 'error');
+    }
+}
+
+async function loadTrip(tripId) {
+    if (!currentUser) {
+        alert('יש להתחבר כדי לטעון טיול');
+        return;
+    }
+    
+    try {
+        const tripRef = doc(db, 'sessions', tripId);
+        const tripDoc = await getDocs(collection(db, 'sessions'));
+        
+        let tripData = null;
+        tripDoc.forEach((doc) => {
+            if (doc.id === tripId) {
+                tripData = doc.data();
+            }
+        });
+
+        if (tripData) {
+            // Check if trip belongs to current user
+            if (tripData.userId !== currentUser.uid) {
+                alert('אין לך הרשאה לטעון טיול זה');
+                return;
+            }
+            
+            teacherName = tripData.teacherName;
+            className = tripData.className;
+            students = tripData.students;
+            isCountingActive = tripData.isCountingActive;
+            currentTripId = tripId;
+
+            // Update UI
+            document.getElementById('teacher-name').value = teacherName;
+            document.getElementById('class-name').value = className;
+            document.getElementById('students-list').value = students.map(s => s.name).join('\n');
+
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('teacher-controls').classList.remove('hidden');
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('counter').classList.remove('hidden');
+            document.getElementById('students-section').classList.remove('hidden');
+
+            updateCounter();
+            displayStudents();
+            updateStatus();
+        }
+    } catch (error) {
+        console.error('Error loading trip:', error);
+        alert('שגיאה בטעינת הטיול: ' + error.message);
+    }
+}
+
+async function deleteTrip(tripId) {
+    if (!currentUser) {
+        showNotification('יש להתחבר כדי למחוק טיול', 'error');
+        return;
+    }
+    
+    if (confirm('האם אתה בטוח שברצונך למחוק את הטיול הזה?')) {
+        try {
+            // First check if trip belongs to current user
+            const tripDoc = await getDocs(collection(db, 'sessions'));
+            let tripData = null;
+            tripDoc.forEach((doc) => {
+                if (doc.id === tripId) {
+                    tripData = doc.data();
+                }
+            });
+            
+            if (tripData && tripData.userId !== currentUser.uid) {
+                showNotification('אין לך הרשאה למחוק טיול זה', 'error');
+                return;
+            }
+            
+            await deleteDoc(doc(db, 'sessions', tripId));
+            showNotification('הטיול נמחק בהצלחה', 'success');
+            loadTrips();
+        } catch (error) {
+            console.error('Error deleting trip:', error);
+            showNotification('שגיאה במחיקת הטיול: ' + error.message, 'error');
+        }
+    }
+}
+
+async function loadMostRecentTrip(silent = false) {
+    if (!currentUser) {
+        if (!silent) {
+            showNotification('יש להתחבר כדי לטעון טיול', 'error');
+        }
+        return;
+    }
+    
+    try {
+        // Query trips for current user only
+        const tripsQuery = query(collection(db, 'sessions'), where('userId', '==', currentUser.uid));
+        const querySnapshot = await getDocs(tripsQuery);
+        
+        let userTrips = [];
+        querySnapshot.forEach((doc) => {
+            const trip = doc.data();
+            userTrips.push({ id: doc.id, data: trip });
+        });
+
+        if (userTrips.length === 0) {
+            if (!silent) {
+                showNotification('אין טיולים שמורים לטעינה', 'info');
+            }
+            return; // No trips to load
+        }
+
+        // Sort by creation date (most recent first)
+        userTrips.sort((a, b) => {
+            const dateA = a.data.createdAt.toDate();
+            const dateB = b.data.createdAt.toDate();
+            return dateB - dateA;
+        });
+
+        // Load the most recent trip
+        const mostRecentTrip = userTrips[0];
+        await loadTrip(mostRecentTrip.id);
+        
+        if (!silent) {
+            showNotification('הטיול האחרון נטען בהצלחה', 'success');
+        }
+    } catch (error) {
+        console.error('Error loading most recent trip:', error);
+        let errorMessage = 'שגיאה בטעינת הטיול האחרון';
+        
+        if (error.code === 'permission-denied') {
+            errorMessage = 'אין הרשאה לטעון טיולים. אנא ודא שאתה מחובר.';
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'שירות Firestore לא זמין כרגע. אנא נסה שוב מאוחר יותר.';
+        } else if (error.code === 'unauthenticated') {
+            errorMessage = 'יש להתחבר מחדש כדי לטעון טיולים.';
         }
         
         if (!silent) {
