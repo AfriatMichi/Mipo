@@ -155,29 +155,4 @@ firestore-debug.log
 ui-debug.log
 
 # Local development
-*.local
-
-# New styles
-#auth-section {
-#    max-width: 400px;
-#    margin: 40px auto;
-#    background: #f8f9fa;
-#    border-radius: 15px;
-#    padding: 30px;
-#    text-align: center;
-#    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-#}
-#auth-section input {
-#    width: 90%;
-#    margin: 10px 0;
-#    padding: 10px;
-#    border-radius: 8px;
-#    border: 1px solid #ccc;
-#}
-#auth-section button {
-#    margin: 5px;
-#}
-#auth-message {
-#    color: #d00;
-#    margin-top: 10px;
-#} 
+*.local 

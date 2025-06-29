@@ -3,9 +3,15 @@ let isCountingActive = false;
 let teacherName = '';
 let className = '';
 let currentSessionId = null;
+let currentUser = null;
 
 // Firebase functions
 async function saveSession() {
+    if (!currentUser) {
+        alert('יש להתחבר כדי לשמור סשן');
+        return;
+    }
+    
     if (!teacherName || !className || students.length === 0) {
         alert('אנא הגדר תלמידים לפני השמירה');
         return;
@@ -18,7 +24,9 @@ async function saveSession() {
             students: students,
             isCountingActive: isCountingActive,
             createdAt: new Date(),
-            lastUpdated: new Date()
+            lastUpdated: new Date(),
+            userId: currentUser.uid,
+            userEmail: currentUser.email
         };
 
         if (currentSessionId) {
@@ -44,6 +52,11 @@ async function saveSession() {
 }
 
 async function loadSessions() {
+    if (!currentUser) {
+        document.getElementById('sessions-list').innerHTML = '<p>יש להתחבר כדי לראות סשנים</p>';
+        return;
+    }
+    
     try {
         const sessionsList = document.getElementById('sessions-list');
         sessionsList.innerHTML = '<p>טוען סשנים...</p>';
@@ -51,13 +64,21 @@ async function loadSessions() {
         const querySnapshot = await getDocs(collection(db, 'sessions'));
         sessionsList.innerHTML = '';
 
-        if (querySnapshot.empty) {
+        let userSessions = [];
+        querySnapshot.forEach((doc) => {
+            const session = doc.data();
+            // Only show sessions belonging to current user
+            if (session.userId === currentUser.uid) {
+                userSessions.push({ id: doc.id, data: session });
+            }
+        });
+
+        if (userSessions.length === 0) {
             sessionsList.innerHTML = '<p>אין סשנים שמורים</p>';
             return;
         }
 
-        querySnapshot.forEach((doc) => {
-            const session = doc.data();
+        userSessions.forEach(({ id, data: session }) => {
             const sessionDiv = document.createElement('div');
             sessionDiv.className = 'session-item';
             sessionDiv.style.cssText = `
@@ -75,8 +96,8 @@ async function loadSessions() {
                 <p>תלמידים: ${session.students.length}</p>
                 <p>נוכחים: ${session.students.filter(s => s.present).length}</p>
                 <p>נוצר: ${session.createdAt.toDate().toLocaleString('he-IL')}</p>
-                <button class="btn" onclick="loadSession('${doc.id}')" style="margin: 5px;">📂 טען</button>
-                <button class="btn btn-danger" onclick="deleteSession('${doc.id}')" style="margin: 5px;">🗑️ מחק</button>
+                <button class="btn" onclick="loadSession('${id}')" style="margin: 5px;">📂 טען</button>
+                <button class="btn btn-danger" onclick="deleteSession('${id}')" style="margin: 5px;">🗑️ מחק</button>
             `;
             
             sessionDiv.onmouseover = () => {
@@ -98,6 +119,11 @@ async function loadSessions() {
 }
 
 async function loadSession(sessionId) {
+    if (!currentUser) {
+        alert('יש להתחבר כדי לטעון סשן');
+        return;
+    }
+    
     try {
         const sessionRef = doc(db, 'sessions', sessionId);
         const sessionDoc = await getDocs(collection(db, 'sessions'));
@@ -110,6 +136,12 @@ async function loadSession(sessionId) {
         });
 
         if (sessionData) {
+            // Check if session belongs to current user
+            if (sessionData.userId !== currentUser.uid) {
+                alert('אין לך הרשאה לטעון סשן זה');
+                return;
+            }
+            
             teacherName = sessionData.teacherName;
             className = sessionData.className;
             students = sessionData.students;
@@ -140,8 +172,27 @@ async function loadSession(sessionId) {
 }
 
 async function deleteSession(sessionId) {
+    if (!currentUser) {
+        alert('יש להתחבר כדי למחוק סשן');
+        return;
+    }
+    
     if (confirm('האם אתה בטוח שברצונך למחוק את הסשן הזה?')) {
         try {
+            // First check if session belongs to current user
+            const sessionDoc = await getDocs(collection(db, 'sessions'));
+            let sessionData = null;
+            sessionDoc.forEach((doc) => {
+                if (doc.id === sessionId) {
+                    sessionData = doc.data();
+                }
+            });
+            
+            if (sessionData && sessionData.userId !== currentUser.uid) {
+                alert('אין לך הרשאה למחוק סשן זה');
+                return;
+            }
+            
             await deleteDoc(doc(db, 'sessions', sessionId));
             alert('הסשן נמחק בהצלחה!');
             loadSessions();
@@ -315,7 +366,8 @@ function updateStatus() {
 
 // Load sessions on page load
 document.addEventListener('DOMContentLoaded', function() {
-    loadSessions();
+    // Authentication state will be checked by onAuthStateChanged
+    // and sessions will be loaded automatically if user is logged in
 });
 
 // עדכון אוטומטי של הזמן
@@ -324,3 +376,150 @@ setInterval(() => {
         updateCounter();
     }
 }, 1000);
+
+// Authentication functions
+function showLoginForm() {
+    document.getElementById('login-section').classList.remove('hidden');
+    document.getElementById('register-section').classList.add('hidden');
+    document.getElementById('setup-section').classList.add('hidden');
+    document.getElementById('sessions-section').classList.add('hidden');
+    document.getElementById('teacher-controls').classList.add('hidden');
+    document.getElementById('status').classList.add('hidden');
+    document.getElementById('counter').classList.add('hidden');
+    document.getElementById('students-section').classList.add('hidden');
+}
+
+function showRegisterForm() {
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('register-section').classList.remove('hidden');
+    document.getElementById('setup-section').classList.add('hidden');
+    document.getElementById('sessions-section').classList.add('hidden');
+    document.getElementById('teacher-controls').classList.add('hidden');
+    document.getElementById('status').classList.add('hidden');
+    document.getElementById('counter').classList.add('hidden');
+    document.getElementById('students-section').classList.add('hidden');
+}
+
+function showMainApp() {
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('register-section').classList.add('hidden');
+    document.getElementById('setup-section').classList.remove('hidden');
+    document.getElementById('sessions-section').classList.remove('hidden');
+}
+
+async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if (!email || !password) {
+        alert('אנא מלא את כל השדות');
+        return;
+    }
+    
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        currentUser = userCredential.user;
+        showMainApp();
+        updateUserUI();
+        loadSessions();
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('שגיאה בהתחברות: ' + error.message);
+    }
+}
+
+async function loginWithGoogle() {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        currentUser = result.user;
+        showMainApp();
+        updateUserUI();
+        loadSessions();
+    } catch (error) {
+        console.error('Google login error:', error);
+        alert('שגיאה בהתחברות עם Google: ' + error.message);
+    }
+}
+
+async function register() {
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const confirmPassword = document.getElementById('reg-confirm-password').value;
+    
+    if (!email || !password || !confirmPassword) {
+        alert('אנא מלא את כל השדות');
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        alert('הסיסמאות אינן תואמות');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('הסיסמה חייבת להיות לפחות 6 תווים');
+        return;
+    }
+    
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        currentUser = userCredential.user;
+        showMainApp();
+        updateUserUI();
+        loadSessions();
+        alert('ההרשמה הושלמה בהצלחה!');
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert('שגיאה בהרשמה: ' + error.message);
+    }
+}
+
+async function logout() {
+    try {
+        await signOut(auth);
+        currentUser = null;
+        showLoginForm();
+        updateUserUI();
+        // Reset all data
+        students = [];
+        isCountingActive = false;
+        teacherName = '';
+        className = '';
+        currentSessionId = null;
+    } catch (error) {
+        console.error('Logout error:', error);
+        alert('שגיאה בהתנתקות: ' + error.message);
+    }
+}
+
+function updateUserUI() {
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const userInfo = document.getElementById('user-info');
+    const userName = document.getElementById('user-name');
+    
+    if (currentUser) {
+        loginBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        userInfo.classList.remove('hidden');
+        userName.textContent = currentUser.email || currentUser.displayName || 'משתמש';
+    } else {
+        loginBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+        userInfo.classList.add('hidden');
+        userName.textContent = '';
+    }
+}
+
+// Check authentication state on page load
+onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateUserUI();
+    
+    if (user) {
+        showMainApp();
+        loadSessions();
+    } else {
+        showLoginForm();
+    }
+});

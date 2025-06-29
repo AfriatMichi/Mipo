@@ -13,6 +13,7 @@
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
         import { getFirestore, collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -27,9 +28,13 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
 
         // Make Firebase available globally
         window.db = db;
+        window.auth = auth;
+        window.googleProvider = googleProvider;
         window.collection = collection;
         window.addDoc = addDoc;
         window.updateDoc = updateDoc;
@@ -37,33 +42,63 @@
         window.getDocs = getDocs;
         window.deleteDoc = deleteDoc;
         window.onSnapshot = onSnapshot;
-        window.login = login;
-        window.register = register;
-        window.loginWithGoogle = loginWithGoogle;
-        window.logout = logout;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithPopup = signInWithPopup;
+        window.signOut = signOut;
+        window.onAuthStateChanged = onAuthStateChanged;
     </script>
 </head>
 <body>
-    <div id="auth-section">
-        <h2>התחברות / הרשמה</h2>
-        <input type="email" id="auth-email" placeholder="אימייל">
-        <input type="password" id="auth-password" placeholder="סיסמה">
-        <button onclick="login()">התחבר</button>
-        <button onclick="register()">הרשם</button>
-        <button onclick="loginWithGoogle()">התחבר עם Google</button>
-        <button onclick="logout()" id="logout-btn" style="display:none;">התנתק</button>
-        <div id="auth-message"></div>
-    </div>
-
     <div class="container">
         <div class="header">
             <h1>🚌 ספירת תלמידים</h1>
             <p>מערכת נוכחות לטיול</p>
+            <button class="btn btn-login" id="login-btn" onclick="showLoginForm()">🔐 התחברות</button>
+            <button class="btn btn-logout hidden" id="logout-btn" onclick="logout()">🚪 התנתקות</button>
+            <div class="user-info hidden" id="user-info">
+                <span id="user-name"></span>
+            </div>
         </div>
 
         <div class="content">
+            <!-- טופס התחברות -->
+            <div class="section" id="login-section">
+                <h2>🔐 התחברות למערכת</h2>
+                <div class="input-group">
+                    <label for="email">אימייל:</label>
+                    <input type="email" id="email" placeholder="הכנס את האימייל שלך">
+                </div>
+                <div class="input-group">
+                    <label for="password">סיסמה:</label>
+                    <input type="password" id="password" placeholder="הכנס את הסיסמה שלך">
+                </div>
+                <button class="btn" onclick="login()">🔐 התחבר</button>
+                <button class="btn btn-google" onclick="loginWithGoogle()">🔍 התחבר עם Google</button>
+                <button class="btn btn-secondary" onclick="showRegisterForm()">📝 הרשמה חדשה</button>
+            </div>
+
+            <!-- טופס הרשמה -->
+            <div class="section hidden" id="register-section">
+                <h2>📝 הרשמה חדשה</h2>
+                <div class="input-group">
+                    <label for="reg-email">אימייל:</label>
+                    <input type="email" id="reg-email" placeholder="הכנס את האימייל שלך">
+                </div>
+                <div class="input-group">
+                    <label for="reg-password">סיסמה:</label>
+                    <input type="password" id="reg-password" placeholder="הכנס סיסמה (לפחות 6 תווים)">
+                </div>
+                <div class="input-group">
+                    <label for="reg-confirm-password">אימות סיסמה:</label>
+                    <input type="password" id="reg-confirm-password" placeholder="הכנס שוב את הסיסמה">
+                </div>
+                <button class="btn" onclick="register()">📝 הרשמה</button>
+                <button class="btn btn-secondary" onclick="showLoginForm()">🔐 חזרה להתחברות</button>
+            </div>
+
             <!-- הגדרת רשימת תלמידים -->
-            <div class="section" id="setup-section">
+            <div class="section hidden" id="setup-section">
                 <h2>📝 הגדרת רשימת תלמידים</h2>
                 <div class="input-group">
                     <label for="teacher-name">שם המורה:</label>
