@@ -375,4 +375,19 @@ body {
 
 .notification.info {
     background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+/* Auto-save indicator */
+.auto-save-indicator {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+    opacity: 0.8;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
 } 

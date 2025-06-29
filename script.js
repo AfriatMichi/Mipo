@@ -35,15 +35,9 @@ function showNotification(message, type = 'success') {
 }
 
 // Firebase functions
-async function saveSession() {
-    if (!currentUser) {
-        showNotification('יש להתחבר כדי לשמור סשן', 'error');
-        return;
-    }
-    
-    if (!teacherName || !className || students.length === 0) {
-        showNotification('אנא הגדר תלמידים לפני השמירה', 'error');
-        return;
+async function autoSaveSession() {
+    if (!currentUser || !teacherName || !className || students.length === 0) {
+        return; // Don't save if not ready
     }
 
     try {
@@ -52,7 +46,6 @@ async function saveSession() {
             className: className,
             students: students,
             isCountingActive: isCountingActive,
-            createdAt: new Date(),
             lastUpdated: new Date(),
             userId: currentUser.uid,
             userEmail: currentUser.email
@@ -65,15 +58,36 @@ async function saveSession() {
                 ...sessionData,
                 lastUpdated: new Date()
             });
-            showNotification('הסשן עודכן בהצלחה', 'success');
         } else {
             // Create new session
-            const docRef = await addDoc(collection(db, 'sessions'), sessionData);
+            const docRef = await addDoc(collection(db, 'sessions'), {
+                ...sessionData,
+                createdAt: new Date()
+            });
             currentSessionId = docRef.id;
-            showNotification('הסשן נשמר בהצלחה', 'success');
         }
         
+        // Update sessions list
         loadSessions();
+    } catch (error) {
+        console.error('Error auto-saving session:', error);
+    }
+}
+
+async function saveSession() {
+    if (!currentUser) {
+        showNotification('יש להתחבר כדי לשמור סשן', 'error');
+        return;
+    }
+    
+    if (!teacherName || !className || students.length === 0) {
+        showNotification('אנא הגדר תלמידים לפני השמירה', 'error');
+        return;
+    }
+
+    try {
+        await autoSaveSession();
+        showNotification('הסשן נשמר בהצלחה', 'success');
     } catch (error) {
         console.error('Error saving session:', error);
         showNotification('שגיאה בשמירת הסשן: ' + error.message, 'error');
@@ -264,6 +278,9 @@ function setupStudents() {
     updateCounter();
     displayStudents();
     updateStatus();
+    
+    // Auto-save the new session
+    autoSaveSession();
 }
 
 function displayStudents() {
@@ -297,9 +314,7 @@ function toggleStudent(studentId) {
         updateCounter();
         
         // Auto-save when attendance changes
-        if (currentSessionId) {
-            saveSession();
-        }
+        autoSaveSession();
         
         // אפקט ויזואלי
         const card = document.querySelector(`[onclick="toggleStudent('${studentId}')"]`);
@@ -323,9 +338,7 @@ function startCounting() {
     updateStatus();
     
     // Auto-save when counting starts
-    if (currentSessionId) {
-        saveSession();
-    }
+    autoSaveSession();
 }
 
 function stopCounting() {
@@ -340,9 +353,7 @@ function stopCounting() {
     statusText.textContent = `⏹️ הספירה הסתיימה - נוכחים: ${presentCount} מתוך ${totalCount} תלמידים`;
     
     // Auto-save when counting stops
-    if (currentSessionId) {
-        saveSession();
-    }
+    autoSaveSession();
 }
 
 function resetAttendance() {
@@ -352,9 +363,7 @@ function resetAttendance() {
         updateCounter();
         
         // Auto-save when attendance is reset
-        if (currentSessionId) {
-            saveSession();
-        }
+        autoSaveSession();
     }
 }
 
@@ -381,6 +390,7 @@ function newSession() {
 function updateStatus() {
     const statusElement = document.getElementById('status');
     const statusText = document.getElementById('status-text');
+    const autoSaveIndicator = document.getElementById('auto-save-indicator');
     
     if (isCountingActive) {
         statusElement.className = 'status counting pulse';
@@ -388,6 +398,13 @@ function updateStatus() {
     } else {
         statusElement.className = 'status stopped';
         statusText.textContent = '⏸️ הספירה מושהית - ממתין להפעלה';
+    }
+    
+    // Show auto-save indicator only if there's an active session
+    if (currentSessionId && teacherName && className && students.length > 0) {
+        autoSaveIndicator.style.display = 'block';
+    } else {
+        autoSaveIndicator.style.display = 'none';
     }
 }
 
@@ -397,12 +414,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // and sessions will be loaded automatically if user is logged in
 });
 
+// Save data when user leaves the page
+window.addEventListener('beforeunload', function() {
+    if (currentUser && teacherName && className && students.length > 0) {
+        autoSaveSession();
+    }
+});
+
 // עדכון אוטומטי של הזמן
 setInterval(() => {
     if (isCountingActive) {
         updateCounter();
     }
 }, 1000);
+
+// Auto-save every 30 seconds if there's an active session
+setInterval(() => {
+    if (currentUser && currentSessionId && teacherName && className && students.length > 0) {
+        autoSaveSession();
+    }
+}, 30000);
 
 // Authentication functions
 function showLoginForm() {
