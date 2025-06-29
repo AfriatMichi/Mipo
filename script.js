@@ -5,6 +5,84 @@ let className = '';
 let currentSessionId = null;
 let currentUser = null;
 
+// Function to debug authentication state
+function debugAuth() {
+    if (!window.auth) {
+        showNotification('Firebase לא נטען עדיין', 'error');
+        return;
+    }
+    
+    console.log('=== AUTH DEBUG INFO ===');
+    console.log('currentUser:', currentUser);
+    console.log('auth.currentUser:', auth.currentUser);
+    console.log('auth.currentUser?.uid:', auth.currentUser?.uid);
+    console.log('auth.currentUser?.email:', auth.currentUser?.email);
+    console.log('auth.currentUser?.emailVerified:', auth.currentUser?.emailVerified);
+    console.log('auth.currentUser?.providerData:', auth.currentUser?.providerData);
+    
+    if (currentUser) {
+        showNotification(`מחובר: ${currentUser.email} (${currentUser.uid})`, 'info');
+    } else {
+        showNotification('לא מחובר', 'error');
+    }
+}
+
+// Function to refresh authentication and permissions
+async function refreshAuth() {
+    if (!window.auth) {
+        showNotification('Firebase לא נטען עדיין', 'error');
+        return;
+    }
+    
+    try {
+        showNotification('מרענן הרשאות...', 'info');
+        
+        // Force re-authentication check
+        await auth.currentUser?.reload();
+        
+        // Reload sessions
+        await loadSessions();
+        
+        showNotification('ההרשאות רועננו בהצלחה', 'success');
+    } catch (error) {
+        console.error('Error refreshing auth:', error);
+        showNotification('שגיאה ברענון ההרשאות. אנא התחבר מחדש.', 'error');
+        
+        // If refresh fails, redirect to login
+        setTimeout(() => {
+            logout();
+        }, 2000);
+    }
+}
+
+// Function to check if user has proper permissions
+async function checkPermissions() {
+    if (!window.auth || !window.db) {
+        console.log('Firebase not ready yet');
+        return;
+    }
+    
+    try {
+        console.log('Checking permissions for user:', currentUser?.uid, currentUser?.email);
+        console.log('Auth state:', auth.currentUser);
+        
+        // Try to read from sessions collection to test permissions
+        const testQuery = await getDocs(collection(db, 'sessions'));
+        console.log('Permissions check passed');
+    } catch (error) {
+        console.error('Permissions check failed:', error);
+        console.error('Auth details:', {
+            currentUser: currentUser?.uid,
+            authUser: auth.currentUser?.uid,
+            isAuthenticated: !!auth.currentUser
+        });
+        
+        if (error.code === 'permission-denied') {
+            showNotification('בעיית הרשאות זוהתה. לחץ על "רענן הרשאות"', 'warning');
+        }
+    }
+}
+
 // Notification system
 function showNotification(message, type = 'success') {
     // Remove existing notifications
@@ -444,8 +522,38 @@ function updateStatus() {
 
 // Load sessions on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Authentication state will be checked by onAuthStateChanged
-    // and sessions will be loaded automatically if user is logged in
+    // Wait for Firebase to be available
+    const checkFirebase = () => {
+        if (window.auth && window.onAuthStateChanged) {
+            // Check authentication state on page load
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                updateUserUI();
+                
+                if (user) {
+                    showMainApp();
+                    loadSessions();
+                    
+                    // Try to load the most recent session
+                    setTimeout(() => {
+                        loadMostRecentSession(true); // Silent mode for automatic loading
+                    }, 1000); // Small delay to ensure sessions are loaded first
+                    
+                    // Check permissions after a short delay
+                    setTimeout(() => {
+                        checkPermissions();
+                    }, 2000);
+                } else {
+                    showLoginForm();
+                }
+            });
+        } else {
+            // Firebase not ready yet, try again in 100ms
+            setTimeout(checkFirebase, 100);
+        }
+    };
+    
+    checkFirebase();
 });
 
 // Save data when user leaves the page
@@ -617,29 +725,6 @@ function updateUserUI() {
     }
 }
 
-// Check authentication state on page load
-onAuthStateChanged(auth, (user) => {
-    currentUser = user;
-    updateUserUI();
-    
-    if (user) {
-        showMainApp();
-        loadSessions();
-        
-        // Try to load the most recent session
-        setTimeout(() => {
-            loadMostRecentSession(true); // Silent mode for automatic loading
-        }, 1000); // Small delay to ensure sessions are loaded first
-        
-        // Check permissions after a short delay
-        setTimeout(() => {
-            checkPermissions();
-        }, 2000);
-    } else {
-        showLoginForm();
-    }
-});
-
 async function loadMostRecentSession(silent = false) {
     if (!currentUser) {
         if (!silent) {
@@ -696,68 +781,5 @@ async function loadMostRecentSession(silent = false) {
         if (!silent) {
             showNotification(errorMessage, 'error');
         }
-    }
-}
-
-// Function to refresh authentication and permissions
-async function refreshAuth() {
-    try {
-        showNotification('מרענן הרשאות...', 'info');
-        
-        // Force re-authentication check
-        await auth.currentUser?.reload();
-        
-        // Reload sessions
-        await loadSessions();
-        
-        showNotification('ההרשאות רועננו בהצלחה', 'success');
-    } catch (error) {
-        console.error('Error refreshing auth:', error);
-        showNotification('שגיאה ברענון ההרשאות. אנא התחבר מחדש.', 'error');
-        
-        // If refresh fails, redirect to login
-        setTimeout(() => {
-            logout();
-        }, 2000);
-    }
-}
-
-// Function to check if user has proper permissions
-async function checkPermissions() {
-    try {
-        console.log('Checking permissions for user:', currentUser?.uid, currentUser?.email);
-        console.log('Auth state:', auth.currentUser);
-        
-        // Try to read from sessions collection to test permissions
-        const testQuery = await getDocs(collection(db, 'sessions'));
-        console.log('Permissions check passed');
-    } catch (error) {
-        console.error('Permissions check failed:', error);
-        console.error('Auth details:', {
-            currentUser: currentUser?.uid,
-            authUser: auth.currentUser?.uid,
-            isAuthenticated: !!auth.currentUser
-        });
-        
-        if (error.code === 'permission-denied') {
-            showNotification('בעיית הרשאות זוהתה. לחץ על "רענן הרשאות"', 'warning');
-        }
-    }
-}
-
-// Function to debug authentication state
-function debugAuth() {
-    console.log('=== AUTH DEBUG INFO ===');
-    console.log('currentUser:', currentUser);
-    console.log('auth.currentUser:', auth.currentUser);
-    console.log('auth.currentUser?.uid:', auth.currentUser?.uid);
-    console.log('auth.currentUser?.email:', auth.currentUser?.email);
-    console.log('auth.currentUser?.emailVerified:', auth.currentUser?.emailVerified);
-    console.log('auth.currentUser?.providerData:', auth.currentUser?.providerData);
-    
-    if (currentUser) {
-        showNotification(`מחובר: ${currentUser.email} (${currentUser.uid})`, 'info');
-    } else {
-        showNotification('לא מחובר', 'error');
     }
 }
