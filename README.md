@@ -43,7 +43,8 @@ MeePo/
 ├── index.html      # קובץ HTML ראשי
 ├── styles.css      # עיצובים
 ├── script.js       # לוגיקה JavaScript
-└── README.md       # תיעוד
+├── README.md       # תיעוד
+└── LICENSE         # רישיון שימוש פרטי
 ```
 
 ## 🔧 התקנה והפעלה
@@ -90,17 +91,19 @@ MeePo/
 - אין צורך בהרשמה או התחברות
 - נתונים נשמרים באופן אנונימי
 
-## 🤝 תרומה
-
-אם יש לך הצעות לשיפור או תיקון באגים:
-1. Fork את הפרויקט
-2. צור branch חדש
-3. בצע את השינויים
-4. שלח Pull Request
-
 ## 📄 רישיון
 
-פרויקט זה זמין תחת רישיון MIT.
+פרויקט זה מוגן על ידי רישיון שימוש פרטי. כל הזכויות שמורות ל-AfriatMichi.
+
+**שימוש מותר**: שימוש אישי בלבד על ידי המפתח המקורי.
+
+**שימוש אסור**: 
+- העתקה, הפצה או שינוי הקוד
+- שימוש מסחרי
+- יצירת עבודות נגזרות
+- הפצה לצד שלישי
+
+לקבלת הרשאה לשימוש מעבר להיקף הרישיון הנוכחי, יש ליצור קשר עם המפתח.
 
 ## 📞 תמיכה
 
@@ -112,4 +115,5 @@ MeePo/
 
 **פותח על ידי**: AfriatMichi  
 **גרסה**: 1.0.0  
-**תאריך**: 2025 
+**תאריך**: 2025  
+**רישיון**: Private License - All Rights Reserved 
