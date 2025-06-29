@@ -594,21 +594,12 @@ async function logout() {
         currentUser = null;
         showLoginForm();
         updateUserUI();
+        
         // Reset all data
         students = [];
         teacherName = '';
         className = '';
         currentTripId = null;
-        
-        // Hide sessions section
-        document.getElementById('sessions-section').classList.add('hidden');
-        
-        // Show setup section
-        document.getElementById('setup-section').classList.remove('hidden');
-        document.getElementById('teacher-controls').classList.add('hidden');
-        document.getElementById('status').classList.add('hidden');
-        document.getElementById('counter').classList.add('hidden');
-        document.getElementById('students-section').classList.add('hidden');
         
         // Clear form fields
         document.getElementById('teacher-name').value = '';
