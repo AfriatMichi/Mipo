@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ספירת תלמידים - טיול</title>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe_HOBvml0Q493C1g5nfLip2ij3VDfXV0",
+            authDomain: "meepo-7cbe3.firebaseapp.com",
+            projectId: "meepo-7cbe3",
+            storageBucket: "meepo-7cbe3.firebasestorage.app",
+            messagingSenderId: "548182349541",
+            appId: "1:548182349541:web:d8ab2991ca4b4aa8e7660c"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Make Firebase available globally
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.updateDoc = updateDoc;
+        window.doc = doc;
+        window.getDocs = getDocs;
+        window.deleteDoc = deleteDoc;
+        window.onSnapshot = onSnapshot;
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-left: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .status.counting {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+        }
+
+        .status.stopped {
+            background: #fff3e0;
+            color: #f57c00;
+            border: 2px solid #f57c00;
+        }
+
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .student-card {
+            background: white;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+            opacity: 0;
+        }
+
+        .student-card:hover::before {
+            opacity: 1;
+            animation: shine 0.5s ease-in-out;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .student-card.present {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+            border-color: #40c057;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .student-card.present::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .student-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .student-status {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .counter {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .counter h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .counter .numbers {
+            font-size: 3em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .teacher-controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .students-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+
+        .session-item {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .session-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .session-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .session-item p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .session-item .btn {
+            margin: 5px;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 ספירת תלמידים</h1>
+            <p>מערכת נוכחות לטיול</p>
+        </div>
+
+        <div class="content">
+            <!-- הגדרת רשימת תלמידים -->
+            <div class="section" id="setup-section">
+                <h2>📝 הגדרת רשימת תלמידים</h2>
+                <div class="input-group">
+                    <label for="teacher-name">שם המורה:</label>
+                    <input type="text" id="teacher-name" placeholder="הכנס את שמך">
+                </div>
+                <div class="input-group">
+                    <label for="class-name">שם הכיתה/קבוצה:</label>
+                    <input type="text" id="class-name" placeholder="למשל: כיתה ח'1">
+                </div>
+                <div class="input-group">
+                    <label for="students-list">רשימת תלמידים (שם אחד בכל שורה):</label>
+                    <textarea id="students-list" placeholder="הכנס שמות תלמידים, שם אחד בכל שורה&#10;למשל:&#10;יוסי כהן&#10;שרה לוי&#10;דוד דוידוב"></textarea>
+                </div>
+                <button class="btn" onclick="setupStudents()">📋 הכן רשימה</button>
+            </div>
+
+            <!-- ניהול סשנים -->
+            <div class="section" id="sessions-section">
+                <h2>💾 סשנים שמורים</h2>
+                <div id="sessions-list">
+                    <!-- סשנים שמורים יוצגו כאן -->
+                </div>
+                <button class="btn" onclick="loadSessions()">🔄 רענן רשימה</button>
+            </div>
+
+            <!-- בקרות מורה -->
+            <div class="section teacher-controls hidden" id="teacher-controls">
+                <h2>🎯 בקרות מורה</h2>
+                <button class="btn btn-success" onclick="startCounting()">🚀 התחל ספירה</button>
+                <button class="btn btn-danger" onclick="stopCounting()">⏹️ עצור ספירה</button>
+                <button class="btn" onclick="resetAttendance()">🔄 איפוס נוכחות</button>
+                <button class="btn" onclick="saveSession()">💾 שמור סשן</button>
+                <button class="btn" onclick="newSession()">🆕 התחל מחדש</button>
+            </div>
+
+            <!-- מצב הספירה -->
+            <div class="status hidden" id="status">
+                <div id="status-text">🎯 מוכן לספירה</div>
+            </div>
+
+            <!-- מונה תלמידים -->
+            <div class="counter hidden" id="counter">
+                <h3>📊 סטטוס נוכחות</h3>
+                <div class="numbers">
+                    <span id="present-count">0</span> / <span id="total-count">0</span>
+                </div>
+                <div>תלמידים נוכחים</div>
+            </div>
+
+            <!-- רשימת תלמידים -->
+            <div class="section hidden" id="students-section">
+                <h2>👥 רשימת תלמידים</h2>
+                <div class="students-grid" id="students-grid">
+                    <!-- תלמידים יוצגו כאן -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+        let isCountingActive = false;
+        let teacherName = '';
+        let className = '';
+        let currentSessionId = null;
+
+        // Firebase functions
+        async function saveSession() {
+            if (!teacherName || !className || students.length === 0) {
+                alert('אנא הגדר תלמידים לפני השמירה');
+                return;
+            }
+
+            try {
+                const sessionData = {
+                    teacherName: teacherName,
+                    className: className,
+                    students: students,
+                    isCountingActive: isCountingActive,
+                    createdAt: new Date(),
+                    lastUpdated: new Date()
+                };
+
+                if (currentSessionId) {
+                    // Update existing session
+                    const sessionRef = doc(db, 'sessions', currentSessionId);
+                    await updateDoc(sessionRef, {
+                        ...sessionData,
+                        lastUpdated: new Date()
+                    });
+                    alert('הסשן עודכן בהצלחה!');
+                } else {
+                    // Create new session
+                    const docRef = await addDoc(collection(db, 'sessions'), sessionData);
+                    currentSessionId = docRef.id;
+                    alert('הסשן נשמר בהצלחה!');
+                }
+                
+                loadSessions();
+            } catch (error) {
+                console.error('Error saving session:', error);
+                alert('שגיאה בשמירת הסשן: ' + error.message);
+            }
+        }
+
+        async function loadSessions() {
+            try {
+                const sessionsList = document.getElementById('sessions-list');
+                sessionsList.innerHTML = '<p>טוען סשנים...</p>';
+
+                const querySnapshot = await getDocs(collection(db, 'sessions'));
+                sessionsList.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    sessionsList.innerHTML = '<p>אין סשנים שמורים</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const session = doc.data();
+                    const sessionDiv = document.createElement('div');
+                    sessionDiv.className = 'session-item';
+                    sessionDiv.style.cssText = `
+                        background: white;
+                        border: 2px solid #ddd;
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin: 10px 0;
+                        cursor: pointer;
+                        transition: all 0.3s;
+                    `;
+                    
+                    sessionDiv.innerHTML = `
+                        <h3>${session.teacherName} - ${session.className}</h3>
+                        <p>תלמידים: ${session.students.length}</p>
+                        <p>נוכחים: ${session.students.filter(s => s.present).length}</p>
+                        <p>נוצר: ${session.createdAt.toDate().toLocaleString('he-IL')}</p>
+                        <button class="btn" onclick="loadSession('${doc.id}')" style="margin: 5px;">📂 טען</button>
+                        <button class="btn btn-danger" onclick="deleteSession('${doc.id}')" style="margin: 5px;">🗑️ מחק</button>
+                    `;
+                    
+                    sessionDiv.onmouseover = () => {
+                        sessionDiv.style.transform = 'translateY(-2px)';
+                        sessionDiv.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+                    };
+                    
+                    sessionDiv.onmouseout = () => {
+                        sessionDiv.style.transform = 'translateY(0)';
+                        sessionDiv.style.boxShadow = 'none';
+                    };
+                    
+                    sessionsList.appendChild(sessionDiv);
+                });
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                document.getElementById('sessions-list').innerHTML = '<p>שגיאה בטעינת סשנים</p>';
+            }
+        }
+
+        async function loadSession(sessionId) {
+            try {
+                const sessionRef = doc(db, 'sessions', sessionId);
+                const sessionDoc = await getDocs(collection(db, 'sessions'));
+                
+                let sessionData = null;
+                sessionDoc.forEach((doc) => {
+                    if (doc.id === sessionId) {
+                        sessionData = doc.data();
+                    }
+                });
+
+                if (sessionData) {
+                    teacherName = sessionData.teacherName;
+                    className = sessionData.className;
+                    students = sessionData.students;
+                    isCountingActive = sessionData.isCountingActive;
+                    currentSessionId = sessionId;
+
+                    // Update UI
+                    document.getElementById('teacher-name').value = teacherName;
+                    document.getElementById('class-name').value = className;
+                    document.getElementById('students-list').value = students.map(s => s.name).join('\n');
+
+                    document.getElementById('setup-section').classList.add('hidden');
+                    document.getElementById('teacher-controls').classList.remove('hidden');
+                    document.getElementById('status').classList.remove('hidden');
+                    document.getElementById('counter').classList.remove('hidden');
+                    document.getElementById('students-section').classList.remove('hidden');
+
+                    updateCounter();
+                    displayStudents();
+                    updateStatus();
+                    
+                    alert('הסשן נטען בהצלחה!');
+                }
+            } catch (error) {
+                console.error('Error loading session:', error);
+                alert('שגיאה בטעינת הסשן: ' + error.message);
+            }
+        }
+
+        async function deleteSession(sessionId) {
+            if (confirm('האם אתה בטוח שברצונך למחוק את הסשן הזה?')) {
+                try {
+                    await deleteDoc(doc(db, 'sessions', sessionId));
+                    alert('הסשן נמחק בהצלחה!');
+                    loadSessions();
+                } catch (error) {
+                    console.error('Error deleting session:', error);
+                    alert('שגיאה במחיקת הסשן: ' + error.message);
+                }
+            }
+        }
+
+        function setupStudents() {
+            teacherName = document.getElementById('teacher-name').value.trim();
+            className = document.getElementById('class-name').value.trim();
+            const studentsText = document.getElementById('students-list').value.trim();
+            
+            if (!teacherName || !className || !studentsText) {
+                alert('אנא מלא את כל השדות');
+                return;
+            }
+
+            const studentNames = studentsText.split('\n').map(name => name.trim()).filter(name => name);
+            
+            if (studentNames.length === 0) {
+                alert('אנא הכנס לפחות תלמיד אחד');
+                return;
+            }
+
+            students = studentNames.map(name => ({
+                name: name,
+                present: false,
+                id: Math.random().toString(36).substr(2, 9)
+            }));
+
+            currentSessionId = null; // Reset session ID for new session
+
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('teacher-controls').classList.remove('hidden');
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('counter').classList.remove('hidden');
+            document.getElementById('students-section').classList.remove('hidden');
+
+            updateCounter();
+            displayStudents();
+            updateStatus();
+        }
+
+        function displayStudents() {
+            const grid = document.getElementById('students-grid');
+            grid.innerHTML = '';
+
+            students.forEach(student => {
+                const card = document.createElement('div');
+                card.className = `student-card ${student.present ? 'present' : ''}`;
+                card.onclick = () => toggleStudent(student.id);
+                
+                card.innerHTML = `
+                    <div class="student-name">${student.name}</div>
+                    <div class="student-status">${student.present ? 'נוכח ✓' : 'לא נוכח'}</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleStudent(studentId) {
+            if (!isCountingActive) {
+                alert('הספירה לא פעילה כרגע. אנא בקש מהמורה להפעיל את הספירה.');
+                return;
+            }
+
+            const student = students.find(s => s.id === studentId);
+            if (student) {
+                student.present = !student.present;
+                displayStudents();
+                updateCounter();
+                
+                // Auto-save when attendance changes
+                if (currentSessionId) {
+                    saveSession();
+                }
+                
+                // אפקט ויזואלי
+                const card = document.querySelector(`[onclick="toggleStudent('${studentId}')"]`);
+                if (card) {
+                    card.classList.add('pulse');
+                    setTimeout(() => card.classList.remove('pulse'), 1000);
+                }
+            }
+        }
+
+        function updateCounter() {
+            const presentCount = students.filter(s => s.present).length;
+            const totalCount = students.length;
+            
+            document.getElementById('present-count').textContent = presentCount;
+            document.getElementById('total-count').textContent = totalCount;
+        }
+
+        function startCounting() {
+            isCountingActive = true;
+            updateStatus();
+            alert('הספירה החלה! התלמידים יכולים כעת לסמן את עצמם.');
+            
+            // Auto-save when counting starts
+            if (currentSessionId) {
+                saveSession();
+            }
+        }
+
+        function stopCounting() {
+            isCountingActive = false;
+            updateStatus();
+            
+            const presentCount = students.filter(s => s.present).length;
+            const totalCount = students.length;
+            
+            alert(`הספירה הסתיימה!\nנוכחים: ${presentCount} מתוך ${totalCount} תלמידים`);
+            
+            // Auto-save when counting stops
+            if (currentSessionId) {
+                saveSession();
+            }
+        }
+
+        function resetAttendance() {
+            if (confirm('האם אתה בטוח שברצונך לאפס את הנוכחות של כל התלמידים?')) {
+                students.forEach(student => student.present = false);
+                displayStudents();
+                updateCounter();
+                alert('הנוכחות אופסה בהצלחה');
+                
+                // Auto-save when attendance is reset
+                if (currentSessionId) {
+                    saveSession();
+                }
+            }
+        }
+
+        function newSession() {
+            if (confirm('האם אתה בטוח שברצונך להתחיל מחדש? כל הנתונים הנוכחיים יאבדו.')) {
+                students = [];
+                isCountingActive = false;
+                teacherName = '';
+                className = '';
+                currentSessionId = null;
+                
+                document.getElementById('teacher-name').value = '';
+                document.getElementById('class-name').value = '';
+                document.getElementById('students-list').value = '';
+                
+                document.getElementById('setup-section').classList.remove('hidden');
+                document.getElementById('teacher-controls').classList.add('hidden');
+                document.getElementById('status').classList.add('hidden');
+                document.getElementById('counter').classList.add('hidden');
+                document.getElementById('students-section').classList.add('hidden');
+            }
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('status');
+            const statusText = document.getElementById('status-text');
+            
+            if (isCountingActive) {
+                statusElement.className = 'status counting pulse';
+                statusText.textContent = '🔄 הספירה פעילה - תלמידים יכולים לסמן את עצמם';
+            } else {
+                statusElement.className = 'status stopped';
+                statusText.textContent = '⏸️ הספירה מושהית - ממתין להפעלה';
+            }
+        }
+
+        // Load sessions on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSessions();
+        });
+
+        // עדכון אוטומטי של הזמן
+        setInterval(() => {
+            if (isCountingActive) {
+                updateCounter();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
