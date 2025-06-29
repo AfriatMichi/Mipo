@@ -11,6 +11,13 @@ async function saveSession() {
     console.log('className:', className);
     console.log('students:', students);
     
+    // Check if Firebase is available
+    if (typeof db === 'undefined' || typeof addDoc === 'undefined') {
+        console.error('Firebase functions not available!');
+        alert('שגיאה: Firebase לא זמין. אנא רענן את הדף.');
+        return;
+    }
+    
     if (!teacherName || !className || students.length === 0) {
         alert('אנא הגדר תלמידים לפני השמירה');
         return;
@@ -60,6 +67,14 @@ async function saveSession() {
 
 async function loadSessions() {
     console.log('loadSessions called');
+    
+    // Check if Firebase is available
+    if (typeof db === 'undefined' || typeof getDocs === 'undefined') {
+        console.error('Firebase functions not available!');
+        document.getElementById('sessions-list').innerHTML = '<p>שגיאה: Firebase לא זמין</p>';
+        return;
+    }
+    
     try {
         const sessionsList = document.getElementById('sessions-list');
         sessionsList.innerHTML = '<p>טוען סשנים...</p>';
@@ -343,6 +358,15 @@ function updateStatus() {
 // Load sessions on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Page loaded, initializing...');
+    
+    // Check if Firebase is loaded
+    if (typeof db === 'undefined') {
+        console.error('Firebase not loaded!');
+        alert('שגיאה: Firebase לא נטען כראוי. אנא רענן את הדף.');
+        return;
+    }
+    
+    console.log('Firebase is loaded, database:', db);
     loadSessions();
 });
 
