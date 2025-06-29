@@ -40,6 +40,17 @@
     </script>
 </head>
 <body>
+    <div id="auth-section">
+        <h2>התחברות / הרשמה</h2>
+        <input type="email" id="auth-email" placeholder="אימייל">
+        <input type="password" id="auth-password" placeholder="סיסמה">
+        <button onclick="login()">התחבר</button>
+        <button onclick="register()">הרשם</button>
+        <button onclick="loginWithGoogle()">התחבר עם Google</button>
+        <button onclick="logout()" id="logout-btn" style="display:none;">התנתק</button>
+        <div id="auth-message"></div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🚌 ספירת תלמידים</h1>
