@@ -451,15 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showMainApp();
                     loadTrips();
                     
-                    // Try to load the most recent trip
-                    setTimeout(() => {
-                        loadMostRecentTrip(true); // Silent mode for automatic loading
-                    }, 1000); // Small delay to ensure trips are loaded first
-                    
-                    // Check permissions after a short delay
-                    setTimeout(() => {
-                        checkPermissions();
-                    }, 2000);
+                    // Removed automatic loading of most recent trip
                 } else {
                     showLoginForm();
                 }
@@ -540,10 +532,7 @@ async function login() {
         updateUserUI();
         loadTrips();
         
-        // Try to load the most recent trip
-        setTimeout(() => {
-            loadMostRecentTrip(true); // Silent mode for automatic loading
-        }, 1000); // Small delay to ensure trips are loaded first
+        // Removed automatic loading of most recent trip
     } catch (error) {
         console.error('Login error:', error);
         alert('שגיאה בהתחברות: ' + error.message);
@@ -558,10 +547,7 @@ async function loginWithGoogle() {
         updateUserUI();
         loadTrips();
         
-        // Try to load the most recent trip
-        setTimeout(() => {
-            loadMostRecentTrip(true); // Silent mode for automatic loading
-        }, 1000); // Small delay to ensure trips are loaded first
+        // Removed automatic loading of most recent trip
     } catch (error) {
         console.error('Google login error:', error);
         alert('שגיאה בהתחברות עם Google: ' + error.message);
@@ -593,9 +579,9 @@ async function register() {
         currentUser = userCredential.user;
         showMainApp();
         updateUserUI();
-        loadSessions();
+        loadTrips();
         
-        // For new users, there won't be any sessions to load, so we don't call loadMostRecentSession
+        // For new users, there won't be any trips to load
     } catch (error) {
         console.error('Registration error:', error);
         alert('שגיאה בהרשמה: ' + error.message);
@@ -658,64 +644,6 @@ function updateUserUI() {
         logoutBtn.classList.add('hidden');
         userInfo.classList.add('hidden');
         userName.textContent = '';
-    }
-}
-
-async function loadMostRecentSession(silent = false) {
-    if (!currentUser) {
-        if (!silent) {
-            showNotification('יש להתחבר כדי לטעון סשן', 'error');
-        }
-        return;
-    }
-    
-    try {
-        // Query sessions for current user only
-        const sessionsQuery = query(collection(db, 'sessions'), where('userId', '==', currentUser.uid));
-        const querySnapshot = await getDocs(sessionsQuery);
-        
-        let userSessions = [];
-        querySnapshot.forEach((doc) => {
-            const session = doc.data();
-            userSessions.push({ id: doc.id, data: session });
-        });
-
-        if (userSessions.length === 0) {
-            if (!silent) {
-                showNotification('אין סשנים שמורים לטעינה', 'info');
-            }
-            return; // No sessions to load
-        }
-
-        // Sort by creation date (most recent first)
-        userSessions.sort((a, b) => {
-            const dateA = a.data.createdAt.toDate();
-            const dateB = b.data.createdAt.toDate();
-            return dateB - dateA;
-        });
-
-        // Load the most recent session
-        const mostRecentSession = userSessions[0];
-        await loadSession(mostRecentSession.id);
-        
-        if (!silent) {
-            showNotification('הסשן האחרון נטען בהצלחה', 'success');
-        }
-    } catch (error) {
-        console.error('Error loading most recent session:', error);
-        let errorMessage = 'שגיאה בטעינת הסשן האחרון';
-        
-        if (error.code === 'permission-denied') {
-            errorMessage = 'אין הרשאה לטעון סשנים. אנא ודא שאתה מחובר.';
-        } else if (error.code === 'unavailable') {
-            errorMessage = 'שירות Firestore לא זמין כרגע. אנא נסה שוב מאוחר יותר.';
-        } else if (error.code === 'unauthenticated') {
-            errorMessage = 'יש להתחבר מחדש כדי לטעון סשנים.';
-        }
-        
-        if (!silent) {
-            showNotification(errorMessage, 'error');
-        }
     }
 }
 
@@ -883,64 +811,6 @@ async function deleteTrip(tripId) {
         } catch (error) {
             console.error('Error deleting trip:', error);
             showNotification('שגיאה במחיקת הטיול: ' + error.message, 'error');
-        }
-    }
-}
-
-async function loadMostRecentTrip(silent = false) {
-    if (!currentUser) {
-        if (!silent) {
-            showNotification('יש להתחבר כדי לטעון טיול', 'error');
-        }
-        return;
-    }
-    
-    try {
-        // Query trips for current user only
-        const tripsQuery = query(collection(db, 'sessions'), where('userId', '==', currentUser.uid));
-        const querySnapshot = await getDocs(tripsQuery);
-        
-        let userTrips = [];
-        querySnapshot.forEach((doc) => {
-            const trip = doc.data();
-            userTrips.push({ id: doc.id, data: trip });
-        });
-
-        if (userTrips.length === 0) {
-            if (!silent) {
-                showNotification('אין טיולים שמורים לטעינה', 'info');
-            }
-            return; // No trips to load
-        }
-
-        // Sort by creation date (most recent first)
-        userTrips.sort((a, b) => {
-            const dateA = a.data.createdAt.toDate();
-            const dateB = b.data.createdAt.toDate();
-            return dateB - dateA;
-        });
-
-        // Load the most recent trip
-        const mostRecentTrip = userTrips[0];
-        await loadTrip(mostRecentTrip.id);
-        
-        if (!silent) {
-            showNotification('הטיול האחרון נטען בהצלחה', 'success');
-        }
-    } catch (error) {
-        console.error('Error loading most recent trip:', error);
-        let errorMessage = 'שגיאה בטעינת הטיול האחרון';
-        
-        if (error.code === 'permission-denied') {
-            errorMessage = 'אין הרשאה לטעון טיולים. אנא ודא שאתה מחובר.';
-        } else if (error.code === 'unavailable') {
-            errorMessage = 'שירות Firestore לא זמין כרגע. אנא נסה שוב מאוחר יותר.';
-        } else if (error.code === 'unauthenticated') {
-            errorMessage = 'יש להתחבר מחדש כדי לטעון טיולים.';
-        }
-        
-        if (!silent) {
-            showNotification(errorMessage, 'error');
         }
     }
 }
