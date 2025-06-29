@@ -616,7 +616,8 @@ async function logout() {
         document.getElementById('students-list').value = '';
         
         // Clear students display
-        document.getElementById('students-container').innerHTML = '';
+        const studentsGrid = document.getElementById('students-grid');
+        if (studentsGrid) studentsGrid.innerHTML = '';
         
         // Reset counter
         document.getElementById('counter').textContent = '0';
