@@ -543,6 +543,9 @@ async function logout() {
         teacherName = '';
         className = '';
         currentSessionId = null;
+        
+        // Hide sessions section
+        document.getElementById('sessions-section').classList.add('hidden');
     } catch (error) {
         console.error('Logout error:', error);
         alert('שגיאה בהתנתקות: ' + error.message);
