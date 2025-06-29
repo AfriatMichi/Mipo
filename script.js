@@ -6,18 +6,6 @@ let currentSessionId = null;
 
 // Firebase functions
 async function saveSession() {
-    console.log('saveSession called');
-    console.log('teacherName:', teacherName);
-    console.log('className:', className);
-    console.log('students:', students);
-    
-    // Check if Firebase is available
-    if (typeof db === 'undefined' || typeof addDoc === 'undefined') {
-        console.error('Firebase functions not available!');
-        alert('שגיאה: Firebase לא זמין. אנא רענן את הדף.');
-        return;
-    }
-    
     if (!teacherName || !className || students.length === 0) {
         alert('אנא הגדר תלמידים לפני השמירה');
         return;
@@ -33,11 +21,8 @@ async function saveSession() {
             lastUpdated: new Date()
         };
 
-        console.log('Session data to save:', sessionData);
-
         if (currentSessionId) {
             // Update existing session
-            console.log('Updating existing session:', currentSessionId);
             const sessionRef = doc(db, 'sessions', currentSessionId);
             await updateDoc(sessionRef, {
                 ...sessionData,
@@ -46,54 +31,32 @@ async function saveSession() {
             alert('הסשן עודכן בהצלחה!');
         } else {
             // Create new session
-            console.log('Creating new session');
             const docRef = await addDoc(collection(db, 'sessions'), sessionData);
             currentSessionId = docRef.id;
-            console.log('New session created with ID:', currentSessionId);
             alert('הסשן נשמר בהצלחה!');
         }
         
         loadSessions();
     } catch (error) {
         console.error('Error saving session:', error);
-        console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            stack: error.stack
-        });
         alert('שגיאה בשמירת הסשן: ' + error.message);
     }
 }
 
 async function loadSessions() {
-    console.log('loadSessions called');
-    
-    // Check if Firebase is available
-    if (typeof db === 'undefined' || typeof getDocs === 'undefined') {
-        console.error('Firebase functions not available!');
-        document.getElementById('sessions-list').innerHTML = '<p>שגיאה: Firebase לא זמין</p>';
-        return;
-    }
-    
     try {
         const sessionsList = document.getElementById('sessions-list');
         sessionsList.innerHTML = '<p>טוען סשנים...</p>';
 
-        console.log('Fetching sessions from database...');
         const querySnapshot = await getDocs(collection(db, 'sessions'));
-        console.log('Query snapshot:', querySnapshot);
-        console.log('Number of sessions found:', querySnapshot.size);
-        
         sessionsList.innerHTML = '';
 
         if (querySnapshot.empty) {
-            console.log('No sessions found in database');
             sessionsList.innerHTML = '<p>אין סשנים שמורים</p>';
             return;
         }
 
         querySnapshot.forEach((doc) => {
-            console.log('Processing session:', doc.id, doc.data());
             const session = doc.data();
             const sessionDiv = document.createElement('div');
             sessionDiv.className = 'session-item';
@@ -130,11 +93,6 @@ async function loadSessions() {
         });
     } catch (error) {
         console.error('Error loading sessions:', error);
-        console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            stack: error.stack
-        });
         document.getElementById('sessions-list').innerHTML = '<p>שגיאה בטעינת סשנים</p>';
     }
 }
@@ -357,16 +315,6 @@ function updateStatus() {
 
 // Load sessions on page load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded, initializing...');
-    
-    // Check if Firebase is loaded
-    if (typeof db === 'undefined') {
-        console.error('Firebase not loaded!');
-        alert('שגיאה: Firebase לא נטען כראוי. אנא רענן את הדף.');
-        return;
-    }
-    
-    console.log('Firebase is loaded, database:', db);
     loadSessions();
 });
 
