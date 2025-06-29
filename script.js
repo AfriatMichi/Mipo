@@ -71,6 +71,17 @@ async function autoSaveSession() {
         loadSessions();
     } catch (error) {
         console.error('Error auto-saving session:', error);
+        let errorMessage = 'שגיאה בשמירה אוטומטית';
+        
+        if (error.code === 'permission-denied') {
+            errorMessage = 'אין הרשאה לשמור. אנא ודא שאתה מחובר.';
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'שירות Firestore לא זמין כרגע. הנתונים לא נשמרו.';
+        } else if (error.code === 'unauthenticated') {
+            errorMessage = 'יש להתחבר מחדש כדי לשמור.';
+        }
+        
+        showNotification(errorMessage, 'error');
     }
 }
 
@@ -157,7 +168,18 @@ async function loadSessions() {
         });
     } catch (error) {
         console.error('Error loading sessions:', error);
-        document.getElementById('sessions-list').innerHTML = '<p>שגיאה בטעינת סשנים</p>';
+        let errorMessage = 'שגיאה בטעינת סשנים';
+        
+        if (error.code === 'permission-denied') {
+            errorMessage = 'אין הרשאה לטעון סשנים. אנא ודא שאתה מחובר.';
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'שירות Firestore לא זמין כרגע. אנא נסה שוב מאוחר יותר.';
+        } else if (error.code === 'unauthenticated') {
+            errorMessage = 'יש להתחבר מחדש כדי לטעון סשנים.';
+        }
+        
+        document.getElementById('sessions-list').innerHTML = `<p style="color: red;">${errorMessage}</p>`;
+        showNotification(errorMessage, 'error');
     }
 }
 
@@ -596,6 +618,11 @@ onAuthStateChanged(auth, (user) => {
         setTimeout(() => {
             loadMostRecentSession(true); // Silent mode for automatic loading
         }, 1000); // Small delay to ensure sessions are loaded first
+        
+        // Check permissions after a short delay
+        setTimeout(() => {
+            checkPermissions();
+        }, 2000);
     } else {
         showLoginForm();
     }
@@ -644,8 +671,55 @@ async function loadMostRecentSession(silent = false) {
         }
     } catch (error) {
         console.error('Error loading most recent session:', error);
+        let errorMessage = 'שגיאה בטעינת הסשן האחרון';
+        
+        if (error.code === 'permission-denied') {
+            errorMessage = 'אין הרשאה לטעון סשנים. אנא ודא שאתה מחובר.';
+        } else if (error.code === 'unavailable') {
+            errorMessage = 'שירות Firestore לא זמין כרגע. אנא נסה שוב מאוחר יותר.';
+        } else if (error.code === 'unauthenticated') {
+            errorMessage = 'יש להתחבר מחדש כדי לטעון סשנים.';
+        }
+        
         if (!silent) {
-            showNotification('שגיאה בטעינת הסשן האחרון', 'error');
+            showNotification(errorMessage, 'error');
+        }
+    }
+}
+
+// Function to refresh authentication and permissions
+async function refreshAuth() {
+    try {
+        showNotification('מרענן הרשאות...', 'info');
+        
+        // Force re-authentication check
+        await auth.currentUser?.reload();
+        
+        // Reload sessions
+        await loadSessions();
+        
+        showNotification('ההרשאות רועננו בהצלחה', 'success');
+    } catch (error) {
+        console.error('Error refreshing auth:', error);
+        showNotification('שגיאה ברענון ההרשאות. אנא התחבר מחדש.', 'error');
+        
+        // If refresh fails, redirect to login
+        setTimeout(() => {
+            logout();
+        }, 2000);
+    }
+}
+
+// Function to check if user has proper permissions
+async function checkPermissions() {
+    try {
+        // Try to read from sessions collection to test permissions
+        const testQuery = await getDocs(collection(db, 'sessions'));
+        console.log('Permissions check passed');
+    } catch (error) {
+        console.error('Permissions check failed:', error);
+        if (error.code === 'permission-denied') {
+            showNotification('בעיית הרשאות זוהתה. לחץ על "רענן הרשאות"', 'warning');
         }
     }
 }

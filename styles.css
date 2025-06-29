@@ -381,8 +381,16 @@ body {
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
 
+.notification.warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+    border-left: 4px solid #e0a800;
+}
+
 .notification.info {
     background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-left: 4px solid #138496;
 }
 
 /* Auto-save indicator */
@@ -398,4 +406,16 @@ body {
     0% { opacity: 0.6; }
     50% { opacity: 1; }
     100% { opacity: 0.6; }
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+    border: none;
+    margin: 5px;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e0a800 0%, #d39e00 100%);
+    transform: translateY(-2px);
 } 
