@@ -12,7 +12,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -47,10 +47,6 @@
         window.signInWithPopup = signInWithPopup;
         window.signOut = signOut;
         window.onAuthStateChanged = onAuthStateChanged;
-        
-        // Import and make query functions available
-        window.query = query;
-        window.where = where;
     </script>
 </head>
 <body>
@@ -119,27 +115,28 @@
                 <button class="btn" onclick="setupStudents()">📋 הכן רשימה</button>
             </div>
 
+            <!-- ניהול סשנים -->
+            <div class="section" id="sessions-section">
+                <h2>💾 סשנים שמורים</h2>
+                <div id="sessions-list">
+                    <!-- סשנים שמורים יוצגו כאן -->
+                </div>
+                <button class="btn" onclick="loadSessions()">🔄 רענן רשימה</button>
+            </div>
+
             <!-- בקרות מורה -->
             <div class="section teacher-controls hidden" id="teacher-controls">
                 <h2>🎯 בקרות מורה</h2>
                 <button class="btn btn-success" onclick="startCounting()">🚀 התחל ספירה</button>
                 <button class="btn btn-danger" onclick="stopCounting()">⏹️ עצור ספירה</button>
                 <button class="btn" onclick="resetAttendance()">🔄 איפוס נוכחות</button>
+                <button class="btn" onclick="saveSession()">💾 שמור סשן</button>
                 <button class="btn" onclick="newSession()">🆕 התחל מחדש</button>
-            </div>
-
-            <!-- ניהול טיולים -->
-            <div class="section hidden" id="sessions-section">
-                <h2>💾 טיולים שמורים</h2>
-                <div id="sessions-list">
-                    <!-- טיולים שמורים יוצגו כאן -->
-                </div>
             </div>
 
             <!-- מצב הספירה -->
             <div class="status hidden" id="status">
-                <div id="status-text">מוכן לספירה</div>
-                <div class="auto-save-indicator" id="auto-save-indicator" style="display: none;">💾 שמירה אוטומטית פעילה</div>
+                <div id="status-text">🎯 מוכן לספירה</div>
             </div>
 
             <!-- מונה תלמידים -->

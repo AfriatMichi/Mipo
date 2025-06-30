@@ -137,15 +137,7 @@ body {
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: white;
-    border: none;
-    margin: 5px;
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
-    transform: translateY(-2px);
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
 }
 
 .btn-google {
@@ -381,53 +373,6 @@ body {
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
 
-.notification.warning {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-    color: #212529;
-    border-left: 4px solid #e0a800;
-}
-
 .notification.info {
     background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white;
-    border-left: 4px solid #138496;
-}
-
-/* Auto-save indicator */
-.auto-save-indicator {
-    font-size: 0.8em;
-    color: #666;
-    margin-top: 5px;
-    opacity: 0.8;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-    color: #212529;
-    border: none;
-    margin: 5px;
-}
-
-.btn-warning:hover {
-    background: linear-gradient(135deg, #e0a800 0%, #d39e00 100%);
-    transform: translateY(-2px);
-}
-
-.btn-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white;
-    border: none;
-    margin: 5px;
-}
-
-.btn-info:hover {
-    background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
-    transform: translateY(-2px);
 } 
