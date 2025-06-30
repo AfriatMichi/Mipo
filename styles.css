@@ -347,32 +347,4 @@ body {
     background: rgba(255,255,255,0.2);
     border-radius: 10px;
     display: inline-block;
-}
-
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 1000;
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
-    max-width: 300px;
-    font-weight: bold;
-}
-
-.notification.show {
-    transform: translateX(0);
-}
-
-.notification.error {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-}
-
-.notification.info {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
 } 

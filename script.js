@@ -5,44 +5,15 @@ let className = '';
 let currentSessionId = null;
 let currentUser = null;
 
-// Notification system
-function showNotification(message, type = 'success') {
-    // Remove existing notifications
-    const existingNotifications = document.querySelectorAll('.notification');
-    existingNotifications.forEach(notification => notification.remove());
-    
-    // Create new notification
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    // Show notification
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 100);
-    
-    // Hide notification after 3 seconds
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 3000);
-}
-
 // Firebase functions
 async function saveSession() {
     if (!currentUser) {
-        showNotification('יש להתחבר כדי לשמור סשן', 'error');
+        alert('יש להתחבר כדי לשמור סשן');
         return;
     }
     
     if (!teacherName || !className || students.length === 0) {
-        showNotification('אנא הגדר תלמידים לפני השמירה', 'error');
+        alert('אנא הגדר תלמידים לפני השמירה');
         return;
     }
 
@@ -65,18 +36,18 @@ async function saveSession() {
                 ...sessionData,
                 lastUpdated: new Date()
             });
-            showNotification('הסשן עודכן בהצלחה', 'success');
+            alert('הסשן עודכן בהצלחה!');
         } else {
             // Create new session
             const docRef = await addDoc(collection(db, 'sessions'), sessionData);
             currentSessionId = docRef.id;
-            showNotification('הסשן נשמר בהצלחה', 'success');
+            alert('הסשן נשמר בהצלחה!');
         }
         
         loadSessions();
     } catch (error) {
         console.error('Error saving session:', error);
-        showNotification('שגיאה בשמירת הסשן: ' + error.message, 'error');
+        alert('שגיאה בשמירת הסשן: ' + error.message);
     }
 }
 
@@ -191,6 +162,8 @@ async function loadSession(sessionId) {
             updateCounter();
             displayStudents();
             updateStatus();
+            
+            alert('הסשן נטען בהצלחה!');
         }
     } catch (error) {
         console.error('Error loading session:', error);
@@ -200,7 +173,7 @@ async function loadSession(sessionId) {
 
 async function deleteSession(sessionId) {
     if (!currentUser) {
-        showNotification('יש להתחבר כדי למחוק סשן', 'error');
+        alert('יש להתחבר כדי למחוק סשן');
         return;
     }
     
@@ -216,16 +189,16 @@ async function deleteSession(sessionId) {
             });
             
             if (sessionData && sessionData.userId !== currentUser.uid) {
-                showNotification('אין לך הרשאה למחוק סשן זה', 'error');
+                alert('אין לך הרשאה למחוק סשן זה');
                 return;
             }
             
             await deleteDoc(doc(db, 'sessions', sessionId));
-            showNotification('הסשן נמחק בהצלחה', 'success');
+            alert('הסשן נמחק בהצלחה!');
             loadSessions();
         } catch (error) {
             console.error('Error deleting session:', error);
-            showNotification('שגיאה במחיקת הסשן: ' + error.message, 'error');
+            alert('שגיאה במחיקת הסשן: ' + error.message);
         }
     }
 }
@@ -321,6 +294,7 @@ function updateCounter() {
 function startCounting() {
     isCountingActive = true;
     updateStatus();
+    alert('הספירה החלה! התלמידים יכולים כעת לסמן את עצמם.');
     
     // Auto-save when counting starts
     if (currentSessionId) {
@@ -335,9 +309,7 @@ function stopCounting() {
     const presentCount = students.filter(s => s.present).length;
     const totalCount = students.length;
     
-    // Show result in status instead of alert
-    const statusText = document.getElementById('status-text');
-    statusText.textContent = `⏹️ הספירה הסתיימה - נוכחים: ${presentCount} מתוך ${totalCount} תלמידים`;
+    alert(`הספירה הסתיימה!\nנוכחים: ${presentCount} מתוך ${totalCount} תלמידים`);
     
     // Auto-save when counting stops
     if (currentSessionId) {
@@ -350,6 +322,7 @@ function resetAttendance() {
         students.forEach(student => student.present = false);
         displayStudents();
         updateCounter();
+        alert('הנוכחות אופסה בהצלחה');
         
         // Auto-save when attendance is reset
         if (currentSessionId) {
@@ -494,6 +467,7 @@ async function register() {
         showMainApp();
         updateUserUI();
         loadSessions();
+        alert('ההרשמה הושלמה בהצלחה!');
     } catch (error) {
         console.error('Registration error:', error);
         alert('שגיאה בהרשמה: ' + error.message);
